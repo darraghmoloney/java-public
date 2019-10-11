@@ -52,6 +52,9 @@ public class LuhnsV2 {
 		int count = 0;
 		int total = 0;
 		
+		//this loop starts at the end of the array
+		//and moves to the front - this is necessary
+		//for algorithm to work correctly
 		for(int i = (numArr.length-1); i >=0; i--) {
 		
 			//take current array number as temp var
