@@ -37,6 +37,10 @@ public class LuhnsV2 {
 		
 		for(int i = 0; i < numStr.length(); i++) {
 			
+			//can also use charAt(i) but must make a temporary
+			//String literal to use the parseInt method,
+			//i.e. Integer.parseInt( charAt(i) + " " );
+			//so substring feels less "hacky"
 			numArr[i] = Integer.parseInt( numStr.substring(i, i+1) );
 			
 		}
