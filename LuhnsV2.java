@@ -68,10 +68,9 @@ public class LuhnsV2 {
 				
 				//reduce nums over 10 to a
 				//single digit
-				//this is the same as adding
-				//the 2 digits together
 				if(temp >= 10) {
-					temp -= 9;						
+					temp -= 9;	//this is the same as adding
+							//the 2 individual digits together										
 				}
 			} 			
 			
