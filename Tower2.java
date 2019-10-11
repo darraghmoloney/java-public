@@ -52,7 +52,7 @@ public class Tower2 {
 		double height = (numBlocks-1) * thickness;
 		
 		long heightLong = (long) height;
-		System.out.println("The minimum height of your tower is " + heightLong);
+		System.out.println("The minimum height of your tower is " + heightLong + " mm");
 		
 	}
 	
