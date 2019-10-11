@@ -1,3 +1,18 @@
+/**  This program uses the famous Luhn's Algorithm
+*    to determine if a credit card number is valid
+*    or not.
+*
+*    The algorithm works by calculating the sum of
+*    all odd digits from the right and adding them
+*    to the sum of doubled even digits (the 
+*    doubled digit is reduced to a single number
+*    if it is greater than 10 before being added).
+*
+*    If the total sum of single and doubled digits
+*    is a multiple of ten, the credit card number 
+*    is valid.
+*/
+
 import java.util.Arrays;
 import java.util.Scanner;
 
