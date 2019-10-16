@@ -7,4 +7,4 @@ DigitalClock.java -> A program to print out a series of numbers in a "digital" n
 
 LuhnsV2.java -> A program to check if a credit-card or other number is valid using the Luhn's Algorithm check with the right-most digit being a check number and even digits after that being doubled, etc.
 
-Tower.java -> A program to check the minimum height of a tower of objects so that the tower has a certain overhang, where the objects are stacked on top of each other in order to lean over a table or other surface.
+Tower2.java -> A program to check the minimum height of a tower of objects so that the tower has a certain overhang, where the objects are stacked on top of each other in order to lean over a table or other surface.
