@@ -9,4 +9,6 @@ Some of the programming projects I've completed in Java, based on both course-wo
 
 <strong>PrimeIt.java</strong> -> Prints primes within a given range of numbers.
 
+<strong>EuclidGCD.java</strong> -> Uses a recursive method to find the Greatest Common Denominator of an array of numbers, calculated with Euclid's algorithm.
+
 <strong>Tower2.java</strong> -> A program to check the minimum height of a tower of objects so that the tower has a certain overhang, where the objects are stacked on top of each other in order to lean over a table or other surface.
