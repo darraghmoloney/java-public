@@ -1,3 +1,9 @@
+/**  A program that takes in two numbers as the start and end of a range
+*    of integers and prints out any values that are prime numbers
+*    using a simple loop to test them for clean division up to
+*    the square root of that number.
+*/
+
 import java.util.Scanner;
 
 public class PrimeIt {
