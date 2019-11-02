@@ -1,7 +1,7 @@
 # java-public
 Programming projects in Java
-<p id="desc" style="color:blue">
-Some of the programming projects I've completed in Java, based on both course-work, online challenges and own ideas.</p>
+
+Some of the programming projects I've completed in Java, based on both course-work, online challenges and own ideas.
 
 <strong>DigitalClock.java</strong> -> A program to print out a series of numbers in a "digital" number style, but with the numbers all on one line.
 
