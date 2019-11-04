@@ -7,6 +7,8 @@ Some of the programming projects I've completed in Java, based on both course-wo
 
 <strong>LuhnsV2.java</strong> -> A program to check if a credit-card or other number is valid using the Luhn's Algorithm check with the right-most digit being a check number and even digits after that being doubled, etc.
 
+<strong>MonteSpag.java</strong> -> Using the Monte Carlo simulation to determine how many valid triangles can be created, given a piece of spaghetti which is broken into 3 pieces in 2 random places, and which the longest piece can have a certain percent of it nibbled off.
+
 <strong>PrimeIt.java</strong> -> Prints primes within a given range of numbers.
 
 <strong>EuclidGCD.java</strong> -> Uses a recursive method to find the Greatest Common Denominator of an array of numbers, calculated with Euclid's algorithm.
