@@ -8,17 +8,22 @@
 */
 
 import java.util.Scanner;
+import java.lang.*;
 
 public class MonteSpag {
 
 	public static void main(String[] args) {
+		
+		
 	
 		Scanner keybd = new Scanner(System.in);
+		
+		System.out.print("Enter the maximum nibble (percent): ");
 		
 		int nibbleInt = keybd.nextInt();
 		double nibblePC = (double) nibbleInt / 100.0;
 		
-		System.out.println(nibblePC);
+		
 		
 		//arbitrary number of times to run monte carlo
 		//randomization simulation
@@ -26,6 +31,9 @@ public class MonteSpag {
 		
 		//count number of valid triangles
 		int isValidTriangle = 0;
+		
+		//Count how long the simulations take
+		long startTime = System.currentTimeMillis();
 		
 		//The Monte Carlo simulation
 		//Run repeated checks with randomly generated
@@ -53,12 +61,12 @@ public class MonteSpag {
 			//third piece is remaining left over
 			//		~~SPAGHETTIVISION~~
 			//		-----|--------|===
-			double piece3 = 1.0 - piece1 - piece2;
+			double piece3 = length - piece1 - piece2;
 			
 			//need to find the longest side
 			double longPiece = Math.max(piece1, Math.max(piece2, piece3));
 			
-			double otherTwoSides = 1.0 - longPiece;
+			double otherTwoSides = length - longPiece;
 			
 			//Taking a nibble from the long piece will
 			//*always* make it more likely a triangle
@@ -77,15 +85,22 @@ public class MonteSpag {
 		
 		}
 		
+		long simTime = System.currentTimeMillis() - startTime;
+		double simSecs = simTime / 1000;
+		
 		//the percent of valid trianges made, as a double for division
 		double pcValidTriangles = (isValidTriangle * 100.0) / numOfChecks;
-		System.out.println(pcValidTriangles);
 		
 		//converted back to an int for cleaner output,
 		//and rounded for accuracy
 		int validTriangles = (int) (Math.round(pcValidTriangles));
 			
-		System.out.println(validTriangles);
+		
+		System.out.print("The percentage of valid triangles with a" 
+						 + " max nibble of " + nibbleInt + "% is ");
+		System.out.println(validTriangles + "%.");
+		System.out.println(numOfChecks + " simulations were ran in " 
+						   + simTime + " milliseconds.");
 	
 	
 	}
