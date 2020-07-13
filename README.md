@@ -7,6 +7,11 @@ Some of the programming projects I've completed in Java, based on both course-wo
 ## GPS Distance
 Investigating a "Travelling Salesperson" problem using a mixture of algorithms.
 
+## Hangman AI
+Using statistics to guess randomly chosen dictionary words.
+
+***
+
 ## DigitalClock.java
 A program to print out a series of numbers in a "digital" number style, but with the numbers all on one line.
 
