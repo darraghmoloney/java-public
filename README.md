@@ -13,6 +13,9 @@ Investigating a "Travelling Salesperson" problem using a mixture of Monte Carlo 
 ## Hangman AI
 Using statistics to guess randomly chosen dictionary words.
 
+## Maze Solver
+Using a depth-first search to find a maze exit.
+
 ***
 
 ## DigitalClock.java
