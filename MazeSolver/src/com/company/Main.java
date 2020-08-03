@@ -24,7 +24,7 @@ public class Main {
             if ((s.length() / 2 + 1) > numCols) {
                 System.out.println("Error in maze - must be symmetrical");
                 System.out.println("Problem String: " + s + " (length: " + (s.length() / 2 + 1) + ", expected length: " + numCols + ")");
-                return;
+                throw new RuntimeException("Invalid Maze Creation");
             }
 
             for (int colNum = 0; colNum < numCols; colNum++) {
