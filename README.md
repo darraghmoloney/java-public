@@ -4,8 +4,11 @@ Programming projects in Java
 Some of the programming projects I've completed in Java, based on both course-work, online challenges and own ideas.
 
 ---
+## DFS Tracking
+Using a depth-first search to find the length of all possible paths that can be explored and return the longest ones.
+
 ## GPS Distance
-Investigating a "Travelling Salesperson" problem using a mixture of algorithms.
+Investigating a "Travelling Salesperson" problem using a mixture of Monte Carlo randomization & 2-Opt singles / pairs.
 
 ## Hangman AI
 Using statistics to guess randomly chosen dictionary words.
