@@ -78,6 +78,9 @@ public class SolveMaze {
 
         pause();
 
+        System.out.print("\033[H\033[2J"); //clear console in Linux
+
+
         System.out.println("checking " + rowNum + " " + colNum + ",\t");
 
         display();
@@ -88,6 +91,9 @@ public class SolveMaze {
 
         if (maze[rowNum][colNum] == endMarker) {
             pause();
+
+            System.out.print("\033[H\033[2J");
+
             display();
             System.out.println("\tfound the exit at " + rowNum + " " + colNum + "!");
             foundExit = true;
