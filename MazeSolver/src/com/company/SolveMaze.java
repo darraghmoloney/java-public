@@ -1,6 +1,5 @@
 package com.company;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 public class SolveMaze {
@@ -12,11 +11,12 @@ public class SolveMaze {
     private final int totalCols;
     private boolean foundExit;
     private int numberOfTries; //breakout if stuck
-    private static int printedCount; //break print lines nicely in search output
 
     private static final int wallMarker = 1;
     private static final int startMarker = 2;
     private static final int endMarker = 3;
+
+    private static final int printDelay = 700; //milliseconds between maze re-print so changes can be seen
 
     public SolveMaze(int[][] maze) {
         this.maze = maze;
@@ -76,20 +76,18 @@ public class SolveMaze {
             return;
         }
 
+        pause();
 
         System.out.println("checking " + rowNum + " " + colNum + ",\t");
-        printedCount++;
 
         display();
         System.out.println("->");
-//        if (printedCount % 5 == 0) {
-//            System.out.println();
-//        }
 
         visitable[rowNum][colNum] = false;
         alreadyVisited[rowNum][colNum] = true;
 
         if (maze[rowNum][colNum] == endMarker) {
+            pause();
             display();
             System.out.println("\tfound the exit at " + rowNum + " " + colNum + "!");
             foundExit = true;
@@ -152,7 +150,36 @@ public class SolveMaze {
         }
     }
 
-    public static int[][] parseStringMaze(ArrayList<String> mazeStrArray) {
+    private void pause() {
+        try {
+            Thread.sleep(printDelay);
+        }
+        catch (InterruptedException in) {
+            in.printStackTrace();
+        }
+    }
+
+
+}
+
+class MazeBuilder {
+
+    SolveMaze sm;
+    int[][] mazeInt;
+
+    MazeBuilder(String filepath) {
+
+        ArrayList<String> mazeStrArray = FileRead.read(filepath);
+        mazeInt = parseStringMaze(mazeStrArray);
+
+    }
+
+    public SolveMaze build() {
+        sm = new SolveMaze(mazeInt);
+        return sm;
+    }
+
+    private int[][] parseStringMaze(ArrayList<String> mazeStrArray) {
 
         int numRows = mazeStrArray.size();
         int numCols = mazeStrArray.get(0).length() / 2 + 1;
@@ -161,7 +188,7 @@ public class SolveMaze {
 
         int rowNum = 0;
 
-        //sanity check (require symmetrical 2d array) & adding items to int array for easier manipulation
+        // do sanity check (require non-jagged 2d array) & add items to int array
         for (String s : mazeStrArray) {
 
             s = s.trim();
@@ -181,5 +208,4 @@ public class SolveMaze {
 
         return mazeIntArray;
     }
-
 }
