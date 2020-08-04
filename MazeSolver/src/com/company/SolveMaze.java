@@ -10,13 +10,16 @@ public class SolveMaze {
     private final int totalRows;
     private final int totalCols;
     private boolean foundExit;
-    private int numberOfTries; //breakout if stuck
+    private int unvisited;
+    private int numTries; //breakout if failed to find exit (unconnected, missing etc.)
 
-    private static final int wallMarker = 1;
-    private static final int startMarker = 2;
-    private static final int endMarker = 3;
+    private static final int WALL_MARKER = 1;
+    private static final int START_MARKER = 2;
+    private static final int END_MARKER = 3;
 
-    private static final int printDelay = 700; //milliseconds between maze re-print so changes can be seen
+    private static final int PRINT_DELAY = 700; //milliseconds between maze re-print so changes can be seen
+
+    private final int triesLimit; //theoretical max. (maze size * 4) - allow all squares to be checked in each direction.
 
     public SolveMaze(int[][] maze) {
         this.maze = maze;
@@ -24,6 +27,7 @@ public class SolveMaze {
         this.totalCols = maze[0].length;
         this.visitable = new boolean[maze.length][maze[0].length];
         this.alreadyVisited = new boolean[maze.length][maze[0].length];
+        this.triesLimit = totalRows * totalCols * 4;
     }
 
     public void solve() {
@@ -33,11 +37,12 @@ public class SolveMaze {
 
         for (int i = 0; i < maze.length; ++i) {
             for (int j = 0; j < maze[i].length; ++j) {
-                if (maze[i][j] != wallMarker) {
+                if (maze[i][j] != WALL_MARKER) {
                     visitable[i][j] = true;
+                    unvisited++;
                 }
 
-                if (maze[i][j] == startMarker) {
+                if (maze[i][j] == START_MARKER) {
                     startRow = i;
                     startCol = j;
                 }
@@ -46,8 +51,8 @@ public class SolveMaze {
 
         }
 
-        //sanity check - break out if search attempts reach number of cells. should break out anyway, but...
-        while (!foundExit && numberOfTries < totalCols * totalRows) {
+        //sanity check
+        while (!foundExit && unvisited > 0 && numTries < triesLimit) {
             dfs(startRow, startCol);
         }
 
@@ -56,17 +61,17 @@ public class SolveMaze {
             System.out.print("\033[H\033[2J");
             System.out.println();
             display();
-            System.out.println("\tcouldn't find the exit.");
+            System.out.println("\t...couldn't find the exit.");
         }
 
     }
 
     private void dfs(int rowNum, int colNum) {
 
-        numberOfTries++;
+        numTries++;
 
-        //stop all checks if another method call was successful.
-        if (foundExit) {
+        //stop all checks if another method call was successful, none remain or over the attempts limit.
+        if (foundExit || unvisited == 0 || numTries > triesLimit) {
             return;
         }
 
@@ -80,20 +85,17 @@ public class SolveMaze {
             return;
         }
 
+        visitable[rowNum][colNum] = false;
+        alreadyVisited[rowNum][colNum] = true;
+        --unvisited;
+
         pause();
-
         System.out.print("\033[H\033[2J"); //clear console in Linux
-
-
-        System.out.println("checking " + rowNum + " " + colNum + ",\t");
-
+        System.out.println("checking " + rowNum + " " + colNum + ",\t" + unvisited + " remaining...");
         display();
         System.out.println("->");
 
-        visitable[rowNum][colNum] = false;
-        alreadyVisited[rowNum][colNum] = true;
-
-        if (maze[rowNum][colNum] == endMarker) {
+        if (maze[rowNum][colNum] == END_MARKER) {
             pause();
 
             System.out.print("\033[H\033[2J");
@@ -115,11 +117,11 @@ public class SolveMaze {
     private String getMazeStringIcon(int number) {
 
         switch (number) {
-            case wallMarker:
+            case WALL_MARKER:
                 return "#";
-            case startMarker:
+            case START_MARKER:
                 return ">";
-            case endMarker:
+            case END_MARKER:
                 return "!";
             default:
                 return ".";
@@ -162,11 +164,42 @@ public class SolveMaze {
 
     private void pause() {
         try {
-            Thread.sleep(printDelay);
+            Thread.sleep(PRINT_DELAY);
         }
         catch (InterruptedException in) {
             in.printStackTrace();
         }
+    }
+
+    private boolean isUnreachableSpot(int rowNum, int colNum) {
+
+        //guarantee in bounds for surrounding rows & cols
+        //if row/col before below zero index, zero preferably chosen
+        int minRow = Math.max(rowNum - 1, 0);
+        int minCol = Math.max(colNum - 1, 0);
+
+        //if row/col after greater than extent of maze, maze limit preferably chosen
+        int maxRow = Math.min(rowNum + 1, totalRows);
+        int maxCol = Math.min(colNum + 1, totalCols);
+
+
+        for (int i = minRow; i < maxRow; i++) {
+            for (int j = minCol; j < maxCol; j++) {
+
+                if (i == rowNum && j == colNum) { //skip own spot
+                    continue;
+                }
+
+                if (maze[i][j] != WALL_MARKER) { //found a visitable
+                    return false;
+                }
+
+            }
+
+        }
+
+        return true;
+
     }
 
 
