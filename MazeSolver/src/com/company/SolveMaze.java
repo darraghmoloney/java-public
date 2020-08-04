@@ -124,13 +124,13 @@ public class SolveMaze {
         //header line of column numbers
         System.out.print("  ");
         for (int i = 0; i < maze[0].length; ++i) {
-            System.out.print("_" + i + "");
+            System.out.print("_" + i % 10 + ""); //modulo to preserve maze shape in print if columns > 10
         }
         System.out.println();
 
         //each row
         for (int i = 0; i < maze.length; ++i) {
-            System.out.print(i + "| "); //row line number
+            System.out.print(i % 10 + "| "); //row line number (mod 10)
 
             //maze elements in each column
             for (int j = 0; j < maze[i].length; ++j) {
