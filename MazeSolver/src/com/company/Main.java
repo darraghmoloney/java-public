@@ -1,14 +1,11 @@
 package com.company;
 
-import java.util.ArrayList;
 
 public class Main {
 
     public static void main(String[] args) {
 
-        SolveMaze sm = new MazeBuilder("src/com/company/mazeMap.txt").build();
-
-        sm.display();
+        SolveMaze sm = new MazeBuilder("/home/darragh/IdeaProjects/MazeSolver/src/com/company/mazeMap.txt").build();
 
         sm.solve();
 
