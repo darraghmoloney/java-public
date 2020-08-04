@@ -5,21 +5,21 @@ import java.util.ArrayList;
 public class SolveMaze {
 
     private final int[][] maze;
-    private final boolean[][] visitable;
-    private final boolean[][] alreadyVisited;
-    private final int totalRows;
-    private final int totalCols;
-    private boolean foundExit;
-    private int unvisited;
-    private int numTries; //breakout if failed to find exit (unconnected, missing etc.)
+    private final boolean[][] visitable; //if spot is not a wall, or unvisited, this is set to true
+    private final boolean[][] alreadyVisited; //for printing "cleared" mark in maze display output
 
-    private static final int WALL_MARKER = 1;
+    private final int totalRows; //for bounds checking
+    private final int totalCols;
+
+    private boolean foundExit; //end / break conditions
+    private int unvisitedCount;
+
+    private static final int WALL_MARKER = 1; //for logic only - maze output display uses Strings from getMazeStringIcon()
     private static final int START_MARKER = 2;
     private static final int END_MARKER = 3;
 
     private static final int PRINT_DELAY = 700; //milliseconds between maze re-print so changes can be seen
 
-    private final int triesLimit; //theoretical max. (maze size * 4) - allow all squares to be checked in each direction.
 
     public SolveMaze(int[][] maze) {
         this.maze = maze;
@@ -27,22 +27,21 @@ public class SolveMaze {
         this.totalCols = maze[0].length;
         this.visitable = new boolean[maze.length][maze[0].length];
         this.alreadyVisited = new boolean[maze.length][maze[0].length];
-        this.triesLimit = totalRows * totalCols * 4;
     }
 
     public void solve() {
 
-        int startRow = 0;
-        int startCol = 0;
+        Integer startRow = null;
+        Integer startCol = null;
 
         for (int i = 0; i < maze.length; ++i) {
             for (int j = 0; j < maze[i].length; ++j) {
                 if (maze[i][j] != WALL_MARKER) {
                     visitable[i][j] = true;
-                    unvisited++;
+                    unvisitedCount++;
                 }
 
-                if (maze[i][j] == START_MARKER) {
+                if (maze[i][j] == START_MARKER && startRow == null) { //set start position at FIRST occurrence of 2
                     startRow = i;
                     startCol = j;
                 }
@@ -51,12 +50,20 @@ public class SolveMaze {
 
         }
 
-        //sanity check
-        while (!foundExit && unvisited > 0 && numTries < triesLimit) {
-            dfs(startRow, startCol);
+        if (startRow == null) {
+            throw new RuntimeException("Couldn't find the maze starting point. Ensure the maze contains " + START_MARKER + ".");
         }
 
-        if (!foundExit) {
+        //sanity check
+        while (!foundExit) {
+            dfs(startRow, startCol);
+
+            if (alreadyVisited[startRow][startCol]) { //prevent endless loops
+                break;
+            }
+        }
+
+        if (!foundExit) { //successful exit will print within the dfs method
             pause();
             System.out.print("\033[H\033[2J");
             System.out.println();
@@ -68,10 +75,8 @@ public class SolveMaze {
 
     private void dfs(int rowNum, int colNum) {
 
-        numTries++;
-
         //stop all checks if another method call was successful, none remain or over the attempts limit.
-        if (foundExit || unvisited == 0 || numTries > triesLimit) {
+        if (foundExit || unvisitedCount == 0) {
             return;
         }
 
@@ -87,17 +92,16 @@ public class SolveMaze {
 
         visitable[rowNum][colNum] = false;
         alreadyVisited[rowNum][colNum] = true;
-        --unvisited;
+        --unvisitedCount;
 
         pause();
         System.out.print("\033[H\033[2J"); //clear console in Linux
-        System.out.println("checking " + rowNum + " " + colNum + ",\t" + unvisited + " remaining...");
+        System.out.println("checking " + rowNum + " " + colNum + ",\t" + unvisitedCount + " remaining...");
         display();
         System.out.println("->");
 
         if (maze[rowNum][colNum] == END_MARKER) {
             pause();
-
             System.out.print("\033[H\033[2J");
             System.out.println();
             display();
@@ -105,7 +109,6 @@ public class SolveMaze {
             foundExit = true;
             return;
         }
-
 
         dfs(rowNum, colNum + 1); //right
         dfs(rowNum - 1, colNum); //up
@@ -171,50 +174,19 @@ public class SolveMaze {
         }
     }
 
-    private boolean isUnreachableSpot(int rowNum, int colNum) {
-
-        //guarantee in bounds for surrounding rows & cols
-        //if row/col before below zero index, zero preferably chosen
-        int minRow = Math.max(rowNum - 1, 0);
-        int minCol = Math.max(colNum - 1, 0);
-
-        //if row/col after greater than extent of maze, maze limit preferably chosen
-        int maxRow = Math.min(rowNum + 1, totalRows);
-        int maxCol = Math.min(colNum + 1, totalCols);
-
-
-        for (int i = minRow; i < maxRow; i++) {
-            for (int j = minCol; j < maxCol; j++) {
-
-                if (i == rowNum && j == colNum) { //skip own spot
-                    continue;
-                }
-
-                if (maze[i][j] != WALL_MARKER) { //found a visitable
-                    return false;
-                }
-
-            }
-
-        }
-
-        return true;
-
-    }
-
-
 }
 
+/*
+    Builder class to read the maze from a file, parse the Strings as an int array and instantiate the maze solver object.
+ */
 class MazeBuilder {
 
     SolveMaze sm;
     int[][] mazeInt;
 
     MazeBuilder(String filepath) {
-
         ArrayList<String> mazeStrArray = FileRead.read(filepath);
         mazeInt = parseStringMaze(mazeStrArray);
-
     }
 
     public SolveMaze build() {
