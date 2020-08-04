@@ -36,7 +36,7 @@ public class SolveMaze {
             for (int j = 0; j < maze[i].length; ++j) {
                 if (maze[i][j] != WALL_MARKER) {
                     visitable[i][j] = true;
-                    unvisitedCount++;
+                    ++unvisitedCount;
                 }
 
                 if (maze[i][j] == START_MARKER && startRow == null) { //set start position at FIRST occurrence of 2
@@ -123,17 +123,17 @@ public class SolveMaze {
 
         //header line of column numbers
         System.out.print("  ");
-        for (int i = 0; i < maze[0].length; i++) {
+        for (int i = 0; i < maze[0].length; ++i) {
             System.out.print("_" + i + "");
         }
         System.out.println();
 
         //each row
-        for (int i = 0; i < maze.length; i++) {
+        for (int i = 0; i < maze.length; ++i) {
             System.out.print(i + "| "); //row line number
 
             //maze elements in each column
-            for (int j = 0; j < maze[i].length; j++) {
+            for (int j = 0; j < maze[i].length; ++j) {
 
                 String mazeIcon;
 
@@ -201,11 +201,11 @@ class MazeBuilder {
                 throw new RuntimeException("Invalid Maze Creation");
             }
 
-            for (int colNum = 0; colNum < numCols; colNum++) {
+            for (int colNum = 0; colNum < numCols; ++colNum) {
                 //ignore space - jump 2 when filling chars from String. (only single digit numbers with spaces in maze strings)
                 mazeIntArray[rowNum][colNum] = Integer.parseInt(s.charAt(colNum * 2) + "");
             }
-            rowNum++;
+            ++rowNum;
         }
 
         return mazeIntArray;
