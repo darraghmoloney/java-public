@@ -6,7 +6,6 @@ public class SolveMaze {
 
     private final int[][] maze;
     private final boolean[][] visitable; //if spot is not a wall, or unvisited, this is set to true
-    private final boolean[][] alreadyVisited; //for printing "cleared" mark in maze display output
 
     private final int totalRows; //for bounds checking
     private final int totalCols;
@@ -14,7 +13,7 @@ public class SolveMaze {
     private boolean foundExit; //end / break conditions
     private int unvisitedCount;
 
-    private static final int WALL_MARKER = 1; //for logic only - maze output display uses Strings from getMazeStringIcon()
+    private static final int WALL_MARKER = 1; //for logic only - maze display uses Strings from getMazeStringIcon()
     private static final int START_MARKER = 2;
     private static final int END_MARKER = 3;
 
@@ -26,7 +25,6 @@ public class SolveMaze {
         this.totalRows = maze.length;
         this.totalCols = maze[0].length;
         this.visitable = new boolean[maze.length][maze[0].length];
-        this.alreadyVisited = new boolean[maze.length][maze[0].length];
     }
 
     public void solve() {
@@ -68,23 +66,19 @@ public class SolveMaze {
 
     private void dfs(int rowNum, int colNum) {
 
-        //stop all checks if another method call was successful, none remain or over the attempts limit.
         if (foundExit || unvisitedCount == 0) {
             return;
         }
 
-        //out of bounds.
         if (rowNum < 0 || colNum < 0 || rowNum >= totalRows || colNum >= totalCols) {
             return;
         }
 
-        //prev. visited, or non-visitable (represented by number 1)
         if (!visitable[rowNum][colNum]) {
             return;
         }
 
         visitable[rowNum][colNum] = false;
-        alreadyVisited[rowNum][colNum] = true;
         --unvisitedCount;
 
         pause();
@@ -136,14 +130,14 @@ public class SolveMaze {
 
         //each row
         for (int i = 0; i < maze.length; i++) {
-            System.out.print(i + "| "); //row line number at side
+            System.out.print(i + "| "); //row line number
 
             //maze elements in each column
             for (int j = 0; j < maze[i].length; j++) {
 
                 String mazeIcon;
 
-                if (alreadyVisited[i][j]) {
+                if (!visitable[i][j] && maze[i][j] != WALL_MARKER) { //prev. visited spot
                     mazeIcon = " ";
                 } else {
                     mazeIcon = getMazeStringIcon( maze[i][j] );
