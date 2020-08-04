@@ -10,7 +10,7 @@ public class FileRead {
 
     public static ArrayList<String> read(String filepath) {
 
-        String nextLine = new String();
+        String nextLine;
         ArrayList<String> textArray = new ArrayList<>();
 
         try (BufferedReader br = new BufferedReader(new FileReader(filepath))) {
