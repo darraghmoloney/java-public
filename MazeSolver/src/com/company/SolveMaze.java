@@ -52,6 +52,10 @@ public class SolveMaze {
         }
 
         if (!foundExit) {
+            pause();
+            System.out.print("\033[H\033[2J");
+            System.out.println();
+            display();
             System.out.println("\tcouldn't find the exit.");
         }
 
@@ -93,7 +97,7 @@ public class SolveMaze {
             pause();
 
             System.out.print("\033[H\033[2J");
-
+            System.out.println();
             display();
             System.out.println("\tfound the exit at " + rowNum + " " + colNum + "!");
             foundExit = true;
