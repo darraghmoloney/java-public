@@ -184,27 +184,37 @@ class MazeBuilder {
     private int[][] parseStringMaze(ArrayList<String> mazeStrArray) {
 
         int numRows = mazeStrArray.size();
-        int numCols = mazeStrArray.get(0).length() / 2 + 1;
 
+        int longest = 0;
+        for (String s : mazeStrArray) { //allow jagged mazes by making array from longest String found
+            if (s.length() > longest) {
+                longest = s.length();
+            }
+        }
+
+        int numCols = longest / 2 + 1; //maze Strings contain number & space pairs except for last number
         int[][] mazeIntArray = new int[numRows][numCols];
-
+        int wallMarker = 1;
         int rowNum = 0;
 
-        // do sanity check (require non-jagged 2d array) & add items to int array
         for (String s : mazeStrArray) {
 
             s = s.trim();
 
-            if ((s.length() / 2 + 1) > numCols) {
-                System.out.println("Error in maze - must be symmetrical");
-                System.out.println("Problem String: " + s + " (length: " + (s.length() / 2 + 1) + ", expected length: " + numCols + ")");
-                throw new RuntimeException("Invalid Maze Creation");
+            int currentCol;
+            for (currentCol = 0; currentCol < s.length() / 2 + 1; ++currentCol) {
+
+                //ignore space - jump 2 when filling chars from String.
+                mazeIntArray[rowNum][currentCol] = Integer.parseInt(s.charAt(currentCol * 2) + "");
+
             }
 
-            for (int colNum = 0; colNum < numCols; ++colNum) {
-                //ignore space - jump 2 when filling chars from String. (only single digit numbers with spaces in maze strings)
-                mazeIntArray[rowNum][colNum] = Integer.parseInt(s.charAt(colNum * 2) + "");
+            //padding in case of shorter line than max to keep array dimensions consistent
+            while (currentCol < numCols) {
+                mazeIntArray[rowNum][currentCol] = wallMarker;
+                ++currentCol;
             }
+
             ++rowNum;
         }
 
