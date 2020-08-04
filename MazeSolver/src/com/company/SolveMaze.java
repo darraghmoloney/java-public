@@ -1,9 +1,13 @@
 package com.company;
 
+import java.io.IOException;
+import java.util.ArrayList;
+
 public class SolveMaze {
 
     private final int[][] maze;
     private final boolean[][] visitable;
+    private final boolean[][] alreadyVisited;
     private final int totalRows;
     private final int totalCols;
     private boolean foundExit;
@@ -19,6 +23,7 @@ public class SolveMaze {
         this.totalRows = maze.length;
         this.totalCols = maze[0].length;
         this.visitable = new boolean[maze.length][maze[0].length];
+        this.alreadyVisited = new boolean[maze.length][maze[0].length];
     }
 
     public void solve() {
@@ -71,17 +76,21 @@ public class SolveMaze {
             return;
         }
 
-        System.out.print("checking " + rowNum + " " + colNum + ",\t");
+
+        System.out.println("checking " + rowNum + " " + colNum + ",\t");
         printedCount++;
 
-        if (printedCount % 5 == 0) {
-            System.out.println();
-        }
+        display();
+        System.out.println("->");
+//        if (printedCount % 5 == 0) {
+//            System.out.println();
+//        }
 
         visitable[rowNum][colNum] = false;
+        alreadyVisited[rowNum][colNum] = true;
 
         if (maze[rowNum][colNum] == endMarker) {
-            System.out.println();
+            display();
             System.out.println("\tfound the exit at " + rowNum + " " + colNum + "!");
             foundExit = true;
             return;
@@ -95,7 +104,7 @@ public class SolveMaze {
 
     }
 
-    public static String getMazeStringIcon(int number) {
+    private String getMazeStringIcon(int number) {
 
         switch (number) {
             case wallMarker:
@@ -108,6 +117,69 @@ public class SolveMaze {
                 return ".";
         }
 
+    }
+
+    public void display() {
+
+        //header line of column numbers
+        System.out.print("  ");
+        for (int i = 0; i < maze[0].length; i++) {
+            System.out.print("_" + i + "");
+        }
+        System.out.println();
+
+        //each row
+        for (int i = 0; i < maze.length; i++) {
+            System.out.print(i + "| "); //row line number at side
+
+            //maze elements in each column
+            for (int j = 0; j < maze[i].length; j++) {
+
+                String mazeIcon;
+
+                if (alreadyVisited[i][j]) {
+                    mazeIcon = " ";
+                } else {
+                    mazeIcon = getMazeStringIcon( maze[i][j] );
+                }
+
+                System.out.print( mazeIcon + " ");
+
+            }
+
+            System.out.println();
+
+        }
+    }
+
+    public static int[][] parseStringMaze(ArrayList<String> mazeStrArray) {
+
+        int numRows = mazeStrArray.size();
+        int numCols = mazeStrArray.get(0).length() / 2 + 1;
+
+        int[][] mazeIntArray = new int[numRows][numCols];
+
+        int rowNum = 0;
+
+        //sanity check (require symmetrical 2d array) & adding items to int array for easier manipulation
+        for (String s : mazeStrArray) {
+
+            s = s.trim();
+
+            if ((s.length() / 2 + 1) > numCols) {
+                System.out.println("Error in maze - must be symmetrical");
+                System.out.println("Problem String: " + s + " (length: " + (s.length() / 2 + 1) + ", expected length: " + numCols + ")");
+                throw new RuntimeException("Invalid Maze Creation");
+            }
+
+            for (int colNum = 0; colNum < numCols; colNum++) {
+                //ignore space - jump 2 when filling chars from String. (only single digit numbers with spaces in maze strings)
+                mazeIntArray[rowNum][colNum] = Integer.parseInt(s.charAt(colNum * 2) + "");
+            }
+            rowNum++;
+        }
+
+        return mazeIntArray;
     }
 
 }
