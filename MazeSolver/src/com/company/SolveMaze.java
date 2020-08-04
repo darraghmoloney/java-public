@@ -54,21 +54,14 @@ public class SolveMaze {
             throw new RuntimeException("Couldn't find the maze starting point. Ensure the maze contains " + START_MARKER + ".");
         }
 
-        //sanity check
-        while (!foundExit) {
-            dfs(startRow, startCol);
-
-            if (alreadyVisited[startRow][startCol]) { //prevent endless loops
-                break;
-            }
-        }
+        dfs(startRow, startCol);
 
         if (!foundExit) { //successful exit will print within the dfs method
             pause();
             System.out.print("\033[H\033[2J");
             System.out.println();
             display();
-            System.out.println("\t...couldn't find the exit.");
+            System.out.println("\t...couldn't find an exit.");
         }
 
     }
@@ -105,7 +98,7 @@ public class SolveMaze {
             System.out.print("\033[H\033[2J");
             System.out.println();
             display();
-            System.out.println("\tfound the exit at " + rowNum + " " + colNum + "!");
+            System.out.println("\tfound an exit at " + rowNum + " " + colNum + "!");
             foundExit = true;
             return;
         }
