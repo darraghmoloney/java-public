@@ -6,7 +6,6 @@ public class SolveMaze {
 
     private final int[][] maze;
     private final boolean[][] visitable; //if spot is not a wall, or unvisited, this is set to true
-    private final boolean[][] alreadyVisited; //for printing "cleared" mark in maze display output
 
     private final int totalRows; //for bounds checking
     private final int totalCols;
@@ -14,7 +13,7 @@ public class SolveMaze {
     private boolean foundExit; //end / break conditions
     private int unvisitedCount;
 
-    private static final int WALL_MARKER = 1; //for logic only - maze output display uses Strings from getMazeStringIcon()
+    private static final int WALL_MARKER = 1; //for logic only - maze display uses Strings from getMazeStringIcon()
     private static final int START_MARKER = 2;
     private static final int END_MARKER = 3;
 
@@ -26,7 +25,6 @@ public class SolveMaze {
         this.totalRows = maze.length;
         this.totalCols = maze[0].length;
         this.visitable = new boolean[maze.length][maze[0].length];
-        this.alreadyVisited = new boolean[maze.length][maze[0].length];
     }
 
     public void solve() {
@@ -38,7 +36,7 @@ public class SolveMaze {
             for (int j = 0; j < maze[i].length; ++j) {
                 if (maze[i][j] != WALL_MARKER) {
                     visitable[i][j] = true;
-                    unvisitedCount++;
+                    ++unvisitedCount;
                 }
 
                 if (maze[i][j] == START_MARKER && startRow == null) { //set start position at FIRST occurrence of 2
@@ -68,23 +66,19 @@ public class SolveMaze {
 
     private void dfs(int rowNum, int colNum) {
 
-        //stop all checks if another method call was successful, none remain or over the attempts limit.
         if (foundExit || unvisitedCount == 0) {
             return;
         }
 
-        //out of bounds.
         if (rowNum < 0 || colNum < 0 || rowNum >= totalRows || colNum >= totalCols) {
             return;
         }
 
-        //prev. visited, or non-visitable (represented by number 1)
         if (!visitable[rowNum][colNum]) {
             return;
         }
 
         visitable[rowNum][colNum] = false;
-        alreadyVisited[rowNum][colNum] = true;
         --unvisitedCount;
 
         pause();
@@ -129,21 +123,21 @@ public class SolveMaze {
 
         //header line of column numbers
         System.out.print("  ");
-        for (int i = 0; i < maze[0].length; i++) {
-            System.out.print("_" + i + "");
+        for (int i = 0; i < maze[0].length; ++i) {
+            System.out.print("_" + i % 10 + ""); //modulo to preserve maze shape in print if columns > 10
         }
         System.out.println();
 
         //each row
-        for (int i = 0; i < maze.length; i++) {
-            System.out.print(i + "| "); //row line number at side
+        for (int i = 0; i < maze.length; ++i) {
+            System.out.print(i % 10 + "| "); //row line number (mod 10)
 
             //maze elements in each column
-            for (int j = 0; j < maze[i].length; j++) {
+            for (int j = 0; j < maze[i].length; ++j) {
 
                 String mazeIcon;
 
-                if (alreadyVisited[i][j]) {
+                if (!visitable[i][j] && maze[i][j] != WALL_MARKER) { //prev. visited spot
                     mazeIcon = " ";
                 } else {
                     mazeIcon = getMazeStringIcon( maze[i][j] );
@@ -190,28 +184,38 @@ class MazeBuilder {
     private int[][] parseStringMaze(ArrayList<String> mazeStrArray) {
 
         int numRows = mazeStrArray.size();
-        int numCols = mazeStrArray.get(0).length() / 2 + 1;
 
+        int longest = 0;
+        for (String s : mazeStrArray) { //allow jagged mazes by making array from longest String found
+            if (s.length() > longest) {
+                longest = s.length();
+            }
+        }
+
+        int numCols = longest / 2 + 1; //maze Strings contain number & space pairs except for last number
         int[][] mazeIntArray = new int[numRows][numCols];
-
+        int wallMarker = 1;
         int rowNum = 0;
 
-        // do sanity check (require non-jagged 2d array) & add items to int array
         for (String s : mazeStrArray) {
 
             s = s.trim();
 
-            if ((s.length() / 2 + 1) > numCols) {
-                System.out.println("Error in maze - must be symmetrical");
-                System.out.println("Problem String: " + s + " (length: " + (s.length() / 2 + 1) + ", expected length: " + numCols + ")");
-                throw new RuntimeException("Invalid Maze Creation");
+            int currentCol;
+            for (currentCol = 0; currentCol < s.length() / 2 + 1; ++currentCol) {
+
+                //ignore space - jump 2 when filling chars from String.
+                mazeIntArray[rowNum][currentCol] = Integer.parseInt(s.charAt(currentCol * 2) + "");
+
             }
 
-            for (int colNum = 0; colNum < numCols; colNum++) {
-                //ignore space - jump 2 when filling chars from String. (only single digit numbers with spaces in maze strings)
-                mazeIntArray[rowNum][colNum] = Integer.parseInt(s.charAt(colNum * 2) + "");
+            //padding in case of shorter line than max to keep array dimensions consistent
+            while (currentCol < numCols) {
+                mazeIntArray[rowNum][currentCol] = wallMarker;
+                ++currentCol;
             }
-            rowNum++;
+
+            ++rowNum;
         }
 
         return mazeIntArray;
