@@ -64,9 +64,7 @@ public class Snakey {
 
     private void addRandomFoodPiece() {
 
-        final int numFood = 1; //only 1 piece of food on the board at a time. might change in different modes in future.
-
-        int totalFreeSpots = (board.length * board[0].length) - snakePieces.size() - numWalls - numFood;
+        int totalFreeSpots = (board.length * board[0].length) - snakePieces.size() - numWalls;
 
         if (totalFreeSpots < 1) {
             System.out.println("game over. you won!"); //this method is only called if game over didn't already occur
@@ -168,7 +166,7 @@ public class Snakey {
      * Provides the 2-D array offset for different directional moves, so that
      * the new location of the snake's head piece can be calculated and updated on the board.
      *
-     * @param choice The String form of the desired move. Uses WSAD for Up, Down, Left and Right.
+     * @param choice The String form of the desired move. Uses W,S,A,D for Up, Down, Left and Right.
      *
      * @return An int array of length 2 with the change in row value in position 0 and the change in col
      * value in position 1.
