@@ -19,6 +19,9 @@ Using statistics to guess randomly chosen dictionary words.
 ## Maze Solver
 Using a depth-first search to find a maze exit.
 
+## Snakey
+A quick-and-dirty console implementation of Snake game logic.
+
 ***
 
 ## DigitalClock.java
