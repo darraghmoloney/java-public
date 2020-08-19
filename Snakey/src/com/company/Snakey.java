@@ -40,7 +40,7 @@ public class Snakey {
 
         snakePieces = new ArrayDeque<>();
 
-        snakePieces.add(new PlaceMarker(5, 3));
+        snakePieces.add(new PlaceMarker(5, 3)); //head of snake
         snakePieces.add(new PlaceMarker(5, 2));
         snakePieces.add(new PlaceMarker(5, 1));
         snakePieces.add(new PlaceMarker(5, 0));
@@ -62,13 +62,15 @@ public class Snakey {
         }
     }
 
-    private void addRandomFoodPiece() {
+    private boolean addRandomFoodPiece() {
 
         int totalFreeSpots = (board.length * board[0].length) - snakePieces.size() - numWalls;
 
         if (totalFreeSpots < 1) {
-            System.out.println("game over. you won!"); //this method is only called if game over didn't already occur
-            return;
+            System.out.println();
+            display();
+            System.out.println("game over. you won! you got " + points + " pts."); //this method is only called if game over didn't already occur
+            return false;
         }
 
         // random row & col. could also use an int location from the board area
@@ -83,6 +85,7 @@ public class Snakey {
 
         board[foodRow][foodCol] = Icon.FOOD.symbol;
 
+        return true;
     }
 
     private void display() {
@@ -211,6 +214,7 @@ public class Snakey {
     private boolean moveSnake(int rowChange, int colChange) {
         int min = 0;
         int max = board.length - 1; //NB: requiring a symmetrical board here (same min/max values for row & column)
+        boolean continuePlay = true;
 
         PlaceMarker head = snakePieces.getFirst();
 
@@ -258,7 +262,7 @@ public class Snakey {
         if (snakeAte) { //if food piece, no need to remove tail as snake has been lengthened by 1
             System.out.println("\tnyom nyom");
             ++points;
-            addRandomFoodPiece(); //tries to add new piece of food, and declares win for player if it can't
+            continuePlay = addRandomFoodPiece(); //tries to add new piece of food, and declares win for player if it can't
         } else {
             System.out.println();
             PlaceMarker removedTail = snakePieces.removeLast(); //remove tail piece & mark board spot as empty
@@ -266,7 +270,7 @@ public class Snakey {
         }
 
 
-        return true;
+        return continuePlay;
 
     }
 
