@@ -191,9 +191,15 @@ public class Snakey {
 
         if (!playerQuitGame) {
 
-            System.out.print("play again? ");
+            System.out.print("play again? (Y/n)");
 
-            boolean playAgain = sc.nextLine().toLowerCase().charAt(0) == 'y';
+            String againChoice = sc.nextLine();
+
+            boolean playAgain = true;
+
+            if (againChoice.length() > 0) {
+                playAgain = againChoice.toLowerCase().charAt(0) == 'y';
+            }
 
             if (playAgain) {
                 resetBoard();
