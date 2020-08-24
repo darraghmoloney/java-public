@@ -6,10 +6,12 @@ public class Snakey {
 
     final static Scanner sc = new Scanner(System.in);
 
-    private int numWalls;
     private int points = 0;
 
     private final Deque<PlaceMarker> snakePieces;
+
+    private final List<PlaceMarker> wallLocations; //to reset board to initial state later.
+    private final Deque<PlaceMarker> startSnakeLocations;
 
     private static final List<String> validChoices = new ArrayList<>(Arrays.asList("w", "s", "a", "d", "q"));
 
@@ -30,12 +32,21 @@ public class Snakey {
 
     public Snakey() {
 
-        for (char[] row : board) {
-            for (char col : row) {
-                if (col == Icon.WALL.symbol) {
-                    ++numWalls;
+        wallLocations = new ArrayList<>();
+        startSnakeLocations = new ArrayDeque<>();
+
+        //records the wall locations on the pre-made map, for future board resets.
+        //could also dynamically add them to the board, like the snake pieces.
+        for (int i = 0; i < board.length; ++i) {
+
+            for (int j = 0; j < board[i].length; ++j) {
+
+                if (board[i][j] == Icon.WALL.symbol) {
+                    wallLocations.add(new PlaceMarker(i, j));
                 }
+
             }
+
         }
 
         snakePieces = new ArrayDeque<>();
@@ -45,6 +56,8 @@ public class Snakey {
         snakePieces.add(new PlaceMarker(5, 1));
         snakePieces.add(new PlaceMarker(5, 0));
 
+        startSnakeLocations.addAll(snakePieces); //for board reset
+
         addSnakeToBoard();
         addRandomFoodPiece();
 
@@ -52,19 +65,43 @@ public class Snakey {
 
 
     private void addSnakeToBoard() {
-        for (PlaceMarker piece : snakePieces) {
+        addItemsToBoard(snakePieces, Icon.SNAKE);
+    }
+
+    private void addWallsToBoard() {
+        addItemsToBoard(wallLocations, Icon.WALL);
+    }
+
+    private void addItemsToBoard(Collection<PlaceMarker> placeMarkers, Icon icon) {
+        for (PlaceMarker piece : placeMarkers) {
 
             int row = piece.getRow();
             int col = piece.getCol();
 
-            board[row][col] = Icon.SNAKE.symbol;
+            board[row][col] = icon.symbol;
 
         }
     }
 
+    private void resetBoard() {
+
+        for (char[] chars : board) {
+            Arrays.fill(chars, Icon.BLANK.symbol);
+        }
+
+        addWallsToBoard();
+
+        snakePieces.clear();
+        snakePieces.addAll(startSnakeLocations);
+
+        addSnakeToBoard();
+        addRandomFoodPiece();
+
+    }
+
     private boolean addRandomFoodPiece() {
 
-        int totalFreeSpots = (board.length * board[0].length) - snakePieces.size() - numWalls;
+        int totalFreeSpots = (board.length * board[0].length) - snakePieces.size() - wallLocations.size();
 
         if (totalFreeSpots < 1) {
             System.out.println();
@@ -102,8 +139,10 @@ public class Snakey {
     public void play() {
 
         boolean keepPlaying = true; //won, or game over - updated by move method
+        boolean playerQuitGame = false; //prompt to play again only in game over condition
 
         String previousMove = "d"; //default to moving right
+
 
         while (keepPlaying) {
 
@@ -130,11 +169,13 @@ public class Snakey {
 
             choice = choice.substring(0, 1).toLowerCase();
 
+
             if (choice.equals("q")) {
                 keepPlaying = false;
+                playerQuitGame = true;
             } else {
 
-                System.out.print( "going " + getDirString(choice) + " " );
+                System.out.print("going " + getDirString(choice) + " ");
 
                 int[] rowColChange = getMove(choice);
                 int rowChange = rowColChange[0];
@@ -148,6 +189,18 @@ public class Snakey {
 
         }
 
+        if (!playerQuitGame) {
+
+            System.out.print("play again? ");
+
+            boolean playAgain = sc.nextLine().toLowerCase().charAt(0) == 'y';
+
+            if (playAgain) {
+                resetBoard();
+                play();
+            }
+        }
+
     }
 
     private static String getDirString(String choice) {
@@ -159,7 +212,7 @@ public class Snakey {
             case "a":
                 return "left";
             case "d":
-                return  "right";
+                return "right";
         }
 
         return "";
@@ -170,7 +223,6 @@ public class Snakey {
      * the new location of the snake's head piece can be calculated and updated on the board.
      *
      * @param choice The String form of the desired move. Uses W,S,A,D for Up, Down, Left and Right.
-     *
      * @return An int array of length 2 with the change in row value in position 0 and the change in col
      * value in position 1.
      */
@@ -198,19 +250,18 @@ public class Snakey {
     }
 
     /**
-     *  Move the snake on the board by checking if the move wanted is valid,
-     *  adding the location of the new head piece of the snake to its list,
-     *  and removing the tail in the case that no food was eaten. If food
-     *  was eaten, the tail is not removed and the snake increases in size by 1.
+     * Move the snake on the board by checking if the move wanted is valid,
+     * adding the location of the new head piece of the snake to its list,
+     * and removing the tail in the case that no food was eaten. If food
+     * was eaten, the tail is not removed and the snake increases in size by 1.
      *
      * @param rowChange An int representing the change in row. For example, -1 means move 1 row back.
      * @param colChange An int representing the change in column. For example, 1 means the column to the right.
-     *
      * @return A boolean value representing the gameplay status. Any attempt to
      * move in an invalid way (into a wall, or the snake itself) returns false.
      * Likewise, a valid move returns true. These values are used directly to
      * break out of the gameplay loop in the main method.
-     * */
+     */
     private boolean moveSnake(int rowChange, int colChange) {
         int min = 0;
         int max = board.length - 1; //NB: requiring a symmetrical board here (same min/max values for row & column)
@@ -247,12 +298,12 @@ public class Snakey {
 
             String thingSnakeHit = board[newRow][newCol] == Icon.SNAKE.symbol ? "self" : "wall";
 
-            System.out.println("bumped into " + thingSnakeHit + ". game over. you got " + points + " pts." );
+            System.out.println("bumped into " + thingSnakeHit + ". game over. you got " + points + " pts.");
 
             return false;
         }
 
-        boolean snakeAte = board[newRow][newCol] == Icon.FOOD.symbol;
+        boolean snakeAte = (board[newRow][newCol] == Icon.FOOD.symbol);
 
         PlaceMarker newHead = new PlaceMarker(newRow, newCol); //if snake didn't eat, could also change tail coordinates, & re-add it to first spot
 
