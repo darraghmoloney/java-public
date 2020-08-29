@@ -12,10 +12,13 @@ public class Snakey {
 
     private final List<PlaceMarker> wallLocations; //to reset board to initial state later.
     private final Deque<PlaceMarker> startSnakeLocations;
+    private final List<PlaceMarker> freeSpots; //for adding food pieces efficiently.
 
     private static final List<String> validChoices = new ArrayList<>(Arrays.asList("w", "s", "a", "d", "q"));
+    private static final Random rand = new Random();
 
     private final char[][] board = {
+
             "------------".toCharArray(),
             "-----------|".toCharArray(),
             "-----------|".toCharArray(),
@@ -28,12 +31,21 @@ public class Snakey {
             "------------".toCharArray(),
             "--------|---".toCharArray(),
             "-----------|".toCharArray(),
+
+            "------".toCharArray(),
+            "------".toCharArray(),
+            "------".toCharArray(),
+            "------".toCharArray(),
+            "------".toCharArray(),
+            "------".toCharArray(),
+
     };
 
     public Snakey() {
 
         wallLocations = new ArrayList<>();
         startSnakeLocations = new ArrayDeque<>();
+        freeSpots = new LinkedList<>();
 
         //records the wall locations on the pre-made map, for future board resets.
         //could also dynamically add them to the board, like the snake pieces.
@@ -41,8 +53,12 @@ public class Snakey {
 
             for (int j = 0; j < board[i].length; ++j) {
 
+                PlaceMarker nextPlace = new PlaceMarker(i, j);
+
                 if (board[i][j] == Icon.WALL.symbol) {
-                    wallLocations.add(new PlaceMarker(i, j));
+                    wallLocations.add(nextPlace);
+                } else {
+                    freeSpots.add(nextPlace);
                 }
 
             }
@@ -50,11 +66,15 @@ public class Snakey {
         }
 
         snakePieces = new ArrayDeque<>();
-
+/*
         snakePieces.add(new PlaceMarker(5, 3)); //head of snake
         snakePieces.add(new PlaceMarker(5, 2));
         snakePieces.add(new PlaceMarker(5, 1));
         snakePieces.add(new PlaceMarker(5, 0));
+*/
+
+        snakePieces.add(new PlaceMarker(0, 1));
+        snakePieces.add(new PlaceMarker(0, 0));
 
         startSnakeLocations.addAll(snakePieces); //for board reset
 
@@ -80,6 +100,10 @@ public class Snakey {
 
             board[row][col] = icon.symbol;
 
+            if (icon != Icon.BLANK) {
+                freeSpots.remove(new PlaceMarker(row, col));
+            }
+
         }
     }
 
@@ -101,26 +125,16 @@ public class Snakey {
 
     private boolean addRandomFoodPiece() {
 
-        int totalFreeSpots = (board.length * board[0].length) - snakePieces.size() - wallLocations.size();
-
-        if (totalFreeSpots < 1) {
+        if (freeSpots.size() < 1) {
             System.out.println();
             display();
             System.out.println("game over. you won! you got " + points + " pts."); //this method is only called if game over didn't already occur
             return false;
         }
 
-        // random row & col. could also use an int location from the board area
-        // with division for row & mod for column but this is easier.
-        int foodRow = (int) (Math.random() * board.length);
-        int foodCol = (int) (Math.random() * board[0].length);
-
-        while (board[foodRow][foodCol] != Icon.BLANK.symbol) {
-            foodRow = (int) (Math.random() * board.length);
-            foodCol = (int) (Math.random() * board[0].length);
-        }
-
-        board[foodRow][foodCol] = Icon.FOOD.symbol;
+        int nextFoodIndex = rand.nextInt(freeSpots.size()); //random only generated for available spots. no wasted / looping random calls
+        PlaceMarker foodPlace = freeSpots.get(nextFoodIndex);
+        board[foodPlace.getRow()][foodPlace.getCol()] = Icon.FOOD.symbol;
 
         return true;
     }
@@ -277,25 +291,26 @@ public class Snakey {
 
         System.out.print("h: " + head.getRow() + ", " + head.getCol());
 
-        int newRow = head.getRow() + rowChange;
-        int newCol = head.getCol() + colChange;
-
-        //fix at boundaries by overlapping.
+        //fix at boundaries by wrapping around.
         //WALLS are marked with a special character, if they exist.
-        if (newRow < min) {
-            newRow = max; //going up, back to bottom
+        int newRow = head.getRow();
+
+        if (rowChange != 0) {
+
+            newRow = wrapNextLocation(head.getRow() + rowChange, board.length - 1);
+
+            //handle different board lengths, to wrap around correctly if jagged array
+            //by moving up or down until a row that's long enough is found
+            while (board[newRow].length <= head.getCol() + colChange) {
+                newRow = wrapNextLocation(newRow + rowChange, board.length - 1);
+            }
+
         }
 
-        if (newRow > max) {
-            newRow = min; //going down, back to top
-        }
+        int newCol = head.getCol();
 
-        if (newCol < min) {
-            newCol = max; //heading left, hit boundary
-        }
-
-        if (newCol > max) {
-            newCol = min; //heading right, hit boundary
+        if (colChange != 0) {
+            newCol = wrapNextLocation(head.getCol() + colChange, board[newRow].length - 1);
         }
 
         if (board[newRow][newCol] == Icon.SNAKE.symbol || board[newRow][newCol] == Icon.WALL.symbol) {
@@ -314,6 +329,7 @@ public class Snakey {
         PlaceMarker newHead = new PlaceMarker(newRow, newCol); //if snake didn't eat, could also change tail coordinates, & re-add it to first spot
 
         snakePieces.addFirst(newHead);
+        freeSpots.remove(newHead);
         board[newRow][newCol] = Icon.SNAKE.symbol;
 
         if (snakeAte) { //if food piece, no need to remove tail as snake has been lengthened by 1
@@ -324,11 +340,36 @@ public class Snakey {
             System.out.println();
             PlaceMarker removedTail = snakePieces.removeLast(); //remove tail piece & mark board spot as empty
             board[removedTail.getRow()][removedTail.getCol()] = Icon.BLANK.symbol; //snake redraw doesn't redraw whole board, so this is necessary
+            freeSpots.add(removedTail);
         }
 
 
         return continuePlay;
 
+    }
+
+    /**
+     * Fix row or column locations that go out of bounds by wrapping around.
+     *
+     * @param rowOrCol The new location to check and change if needed.
+     * @param max The length of the board (if row changes being checked) or length of the row (if columns)
+     *            - that is, one space more than the final index.
+     * @return Returns the in-bounds location, which is wrapped around if the value is at either max or min to its equivalent
+     * opposite, otherwise returning the start value.
+     */
+    private int wrapNextLocation(int rowOrCol, int max) {
+
+        int min = 0;
+
+        if (rowOrCol < min) {
+            return  max; //going up, back to bottom
+        }
+
+        if (rowOrCol > max) {
+            return min; //going down, back to top
+        }
+
+        return rowOrCol;
     }
 
     enum Icon {
