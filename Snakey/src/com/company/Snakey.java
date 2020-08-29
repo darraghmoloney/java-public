@@ -196,7 +196,9 @@ public class Snakey {
 
             System.out.print("points: " + points + ", location: " + currentCol + ", " + currentRow);
 
-            if (first.getCol() >= board[currentRow].length) {
+            boolean inTunnel = first.getCol() >= board[currentRow].length;
+
+            if (inTunnel) {
                 System.out.print(" [IN TUNNEL]");
             }
 
@@ -207,12 +209,23 @@ public class Snakey {
 
             System.out.println("current move: " + previousMove + " (" + directionStr + ")"); //continue with last move if no new input (only enter)
             System.out.println("[enter] keep going");
-            System.out.println("[w] up, [s] down, [a] left, [d] right");
+
+            if (!inTunnel) {
+                System.out.println("[w] up, [s] down, [a] left, [d] right");
+            } else {
+                System.out.println();
+            }
+
             System.out.print("[q] quit: ");
 
             choice = sc.nextLine();
 
             if (choice.length() == 0 || !validChoices.contains(choice.substring(0, 1).toLowerCase())) {
+                choice = previousMove;
+            }
+
+            //disallow changing direction in tunnel as player cannot see snake
+            if (inTunnel) {
                 choice = previousMove;
             }
 
@@ -240,7 +253,7 @@ public class Snakey {
 
         if (!playerQuitGame) {
 
-            System.out.print("play again? (Y/n)");
+            System.out.print("play again? (Y/n) ");
 
             String againChoice = sc.nextLine();
 
