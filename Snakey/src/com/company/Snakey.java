@@ -153,12 +153,24 @@ public class Snakey {
 
     private void display() {
 
+        System.out.print("   ");
+
+        for (int i = 0; i < longestRowLength; ++i) { //col markers a,b,c...z
+            System.out.print(  "_" + (char) (i % 26 + 'a') );
+        }
+
+        System.out.println();
+
         int i = -1;
+
         for (char[] line : board) {
 
-            System.out.print((++i % 10) + " ");
+            System.out.print( (++i < 10 ? " " : "") + i + "| "); //row markers 0-9 (repeat at 10)
 
             for (char square : line) {
+
+
+
                 System.out.print(square + " ");
             }
             System.out.println();
@@ -178,7 +190,17 @@ public class Snakey {
 
             display();
 
-            System.out.println("points: " + points);
+            PlaceMarker first = snakePieces.getFirst();
+            int currentRow = first.getRow();
+            char currentCol = (char) (first.getCol() % 26 + 'a');
+
+            System.out.print("points: " + points + ", location: " + currentCol + ", " + currentRow);
+
+            if (first.getCol() >= board[currentRow].length) {
+                System.out.print(" [IN TUNNEL]");
+            }
+
+            System.out.println();
 
             String choice;
             String directionStr = getDirString(previousMove);
@@ -192,7 +214,6 @@ public class Snakey {
 
             if (choice.length() == 0 || !validChoices.contains(choice.substring(0, 1).toLowerCase())) {
                 choice = previousMove;
-                System.out.print("continuing ");
             }
 
             previousMove = choice;
@@ -204,8 +225,6 @@ public class Snakey {
                 keepPlaying = false;
                 playerQuitGame = true;
             } else {
-
-                System.out.print("going " + getDirString(choice) + " ");
 
                 int[] rowColChange = getMove(choice);
                 int rowChange = rowColChange[0];
@@ -312,23 +331,13 @@ public class Snakey {
         int newRow = head.getRow();
 
         if (rowChange != 0) {
-
             newRow = wrapNextLocation(head.getRow() + rowChange, board.length - 1);
-
-            //handle different board lengths, to wrap around correctly if jagged array
-            //by moving up or down until a row that's long enough is found
-//            while (board[newRow].length <= head.getCol() + colChange) {
-//                newRow = wrapNextLocation(newRow + rowChange, board.length - 1);
-//            }
-
         }
 
         int newCol = head.getCol();
 
         if (colChange != 0) {
-//            newCol = wrapNextLocation(head.getCol() + colChange, board[newRow].length - 1);
-
-            newCol = wrapNextLocation(head.getCol() + colChange, longestRowLength);
+            newCol = wrapNextLocation(head.getCol() + colChange, longestRowLength - 1);
         }
 
         PlaceMarker newHead = new PlaceMarker(newRow, newCol); //if snake didn't eat, could also change tail coordinates, & re-add it to first spot
@@ -340,7 +349,7 @@ public class Snakey {
         //Handling jagged game board dimensions by only drawing visible spots for the snake.
         //(treat the snake as if it is in a tunnel rather than teleporting it to the closest valid location
         //instantly)
-        //NB "tunnels" do not cause GAME OVER collisions
+        //NB "tunnels" do not cause GAME OVER collisions - this would be unfair.
         boolean snakeAte = false;
 
         if (newCol < board[newRow].length) {
@@ -367,12 +376,10 @@ public class Snakey {
             if (snakeAte) { //if food piece, no need to remove tail as snake has been lengthened by 1
                 System.out.println("\tnyom nyom");
                 ++points;
-                snakePieces.add(removedTail);
                 continuePlay = addRandomFoodPiece(); //tries to add new piece of food, and declares win for player if it can't
+                snakePieces.add(removedTail);
             } else {
                 System.out.println();
-
-
             }
 
         }
