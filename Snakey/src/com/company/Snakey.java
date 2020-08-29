@@ -85,7 +85,10 @@ public class Snakey {
 
 
     private void addSnakeToBoard() {
-        addItemsToBoard(snakePieces, Icon.SNAKE);
+        addItemsToBoard(snakePieces, Icon.SNAKE_BODY);
+
+        PlaceMarker snakeHeadLoc = snakePieces.getFirst();
+        board[snakeHeadLoc.getRow()][snakeHeadLoc.getCol()] = Icon.SNAKE_HEAD.symbol;
     }
 
     private void addWallsToBoard() {
@@ -313,11 +316,13 @@ public class Snakey {
             newCol = wrapNextLocation(head.getCol() + colChange, board[newRow].length - 1);
         }
 
-        if (board[newRow][newCol] == Icon.SNAKE.symbol || board[newRow][newCol] == Icon.WALL.symbol) {
+        if (board[newRow][newCol] == Icon.SNAKE_BODY.symbol ||
+                board[newRow][newCol] == Icon.SNAKE_HEAD.symbol || //(<- unlikely, but if snake is length 1 this is possible)
+                board[newRow][newCol] == Icon.WALL.symbol) {
             System.out.println();
             display();
 
-            String thingSnakeHit = board[newRow][newCol] == Icon.SNAKE.symbol ? "self" : "wall";
+            String thingSnakeHit = board[newRow][newCol] == Icon.WALL.symbol ? "wall" : "self";
 
             System.out.println("bumped into " + thingSnakeHit + ". game over. you got " + points + " pts.");
 
@@ -326,11 +331,14 @@ public class Snakey {
 
         boolean snakeAte = (board[newRow][newCol] == Icon.FOOD.symbol);
 
+        //change old head to snake body icon
+        board[head.getRow()][head.getCol()] = Icon.SNAKE_BODY.symbol;
+
         PlaceMarker newHead = new PlaceMarker(newRow, newCol); //if snake didn't eat, could also change tail coordinates, & re-add it to first spot
 
         snakePieces.addFirst(newHead);
         freeSpots.remove(newHead);
-        board[newRow][newCol] = Icon.SNAKE.symbol;
+        board[newRow][newCol] = Icon.SNAKE_HEAD.symbol;
 
         if (snakeAte) { //if food piece, no need to remove tail as snake has been lengthened by 1
             System.out.println("\tnyom nyom");
@@ -376,7 +384,8 @@ public class Snakey {
 
         BLANK('-'),
         FOOD('O'),
-        SNAKE('s'),
+        SNAKE_BODY('s'),
+        SNAKE_HEAD('S'),
         WALL('|');
 
         private final char symbol;
