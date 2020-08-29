@@ -18,4 +18,16 @@ class PlaceMarker {
         return col;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof PlaceMarker)) return false;
+
+        PlaceMarker other = (PlaceMarker) obj;
+        return this.row == other.row && this.col == other.col;
+    }
+
+    @Override
+    public String toString() {
+        return "(" + row + "," + col + ")";
+    }
 }
