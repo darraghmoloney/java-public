@@ -13,30 +13,31 @@ public class Snakey {
     private final List<PlaceMarker> wallLocations; //to reset board to initial state later.
     private final Deque<PlaceMarker> startSnakeLocations;
     private final List<PlaceMarker> freeSpots; //for adding food pieces efficiently.
+    private final int longestRowLength;
 
     private static final List<String> validChoices = new ArrayList<>(Arrays.asList("w", "s", "a", "d", "q"));
     private static final Random rand = new Random();
 
+
     private final char[][] board = {
 
             "------------".toCharArray(),
-            "-----------|".toCharArray(),
-            "-----------|".toCharArray(),
-            "|-----------".toCharArray(),
-            "|-----------".toCharArray(),
-            "|-----------".toCharArray(),
-            "----|-------".toCharArray(),
-            "----|-------".toCharArray(),
+            "------".toCharArray(),
+            "-----------#".toCharArray(),
+            "-----------#".toCharArray(),
+            "------".toCharArray(),
+            "#-----------".toCharArray(),
+            "#-----------".toCharArray(),
+            "#-----------".toCharArray(),
+            "----#-------".toCharArray(),
+            "----#-------".toCharArray(),
+            "------".toCharArray(),
             "------------".toCharArray(),
             "------------".toCharArray(),
-            "--------|---".toCharArray(),
-            "-----------|".toCharArray(),
-
             "------".toCharArray(),
             "------".toCharArray(),
-            "------".toCharArray(),
-            "------".toCharArray(),
-            "------".toCharArray(),
+            "--------#---".toCharArray(),
+            "-----------#".toCharArray(),
             "------".toCharArray(),
 
     };
@@ -47,9 +48,15 @@ public class Snakey {
         startSnakeLocations = new ArrayDeque<>();
         freeSpots = new LinkedList<>();
 
+        int longest = 0;
+
         //records the wall locations on the pre-made map, for future board resets.
         //could also dynamically add them to the board, like the snake pieces.
         for (int i = 0; i < board.length; ++i) {
+
+            if (board[i].length > longest) {
+                longest = board[i].length;
+            }
 
             for (int j = 0; j < board[i].length; ++j) {
 
@@ -64,6 +71,8 @@ public class Snakey {
             }
 
         }
+
+        longestRowLength = longest;
 
         snakePieces = new ArrayDeque<>();
 /*
@@ -144,7 +153,11 @@ public class Snakey {
 
     private void display() {
 
+        int i = -1;
         for (char[] line : board) {
+
+            System.out.print((++i % 10) + " ");
+
             for (char square : line) {
                 System.out.print(square + " ");
             }
@@ -304,49 +317,73 @@ public class Snakey {
 
             //handle different board lengths, to wrap around correctly if jagged array
             //by moving up or down until a row that's long enough is found
-            while (board[newRow].length <= head.getCol() + colChange) {
-                newRow = wrapNextLocation(newRow + rowChange, board.length - 1);
-            }
+//            while (board[newRow].length <= head.getCol() + colChange) {
+//                newRow = wrapNextLocation(newRow + rowChange, board.length - 1);
+//            }
 
         }
 
         int newCol = head.getCol();
 
         if (colChange != 0) {
-            newCol = wrapNextLocation(head.getCol() + colChange, board[newRow].length - 1);
+//            newCol = wrapNextLocation(head.getCol() + colChange, board[newRow].length - 1);
+
+            newCol = wrapNextLocation(head.getCol() + colChange, longestRowLength);
         }
-
-        if (board[newRow][newCol] == Icon.SNAKE_BODY.symbol ||
-                board[newRow][newCol] == Icon.SNAKE_HEAD.symbol || //(<- unlikely, but if snake is length 1 this is possible)
-                board[newRow][newCol] == Icon.WALL.symbol) {
-            System.out.println();
-            display();
-
-            String thingSnakeHit = board[newRow][newCol] == Icon.WALL.symbol ? "wall" : "self";
-
-            System.out.println("bumped into " + thingSnakeHit + ". game over. you got " + points + " pts.");
-
-            return false;
-        }
-
-        boolean snakeAte = (board[newRow][newCol] == Icon.FOOD.symbol);
-
-        //change old head to snake body icon
-        board[head.getRow()][head.getCol()] = Icon.SNAKE_BODY.symbol;
 
         PlaceMarker newHead = new PlaceMarker(newRow, newCol); //if snake didn't eat, could also change tail coordinates, & re-add it to first spot
-
         snakePieces.addFirst(newHead);
-        freeSpots.remove(newHead);
-        board[newRow][newCol] = Icon.SNAKE_HEAD.symbol;
 
-        if (snakeAte) { //if food piece, no need to remove tail as snake has been lengthened by 1
-            System.out.println("\tnyom nyom");
-            ++points;
-            continuePlay = addRandomFoodPiece(); //tries to add new piece of food, and declares win for player if it can't
-        } else {
-            System.out.println();
-            PlaceMarker removedTail = snakePieces.removeLast(); //remove tail piece & mark board spot as empty
+        PlaceMarker removedTail = snakePieces.removeLast(); //remove tail piece & mark board spot as empty
+
+
+        //Handling jagged game board dimensions by only drawing visible spots for the snake.
+        //(treat the snake as if it is in a tunnel rather than teleporting it to the closest valid location
+        //instantly)
+        //NB "tunnels" do not cause GAME OVER collisions
+        boolean snakeAte = false;
+
+        if (newCol < board[newRow].length) {
+
+            //game over check
+            if (board[newRow][newCol] == Icon.SNAKE_BODY.symbol ||
+                    board[newRow][newCol] == Icon.SNAKE_HEAD.symbol || //(<- unlikely, but if snake is length 1 this is possible)
+                    board[newRow][newCol] == Icon.WALL.symbol) {
+                System.out.println();
+                display();
+
+                String thingSnakeHit = board[newRow][newCol] == Icon.WALL.symbol ? "wall" : "self";
+
+                System.out.println("bumped into " + thingSnakeHit + ". game over. you got " + points + " pts.");
+
+                return false;
+            }
+
+            snakeAte = (board[newRow][newCol] == Icon.FOOD.symbol);
+
+            freeSpots.remove(newHead);
+            board[newRow][newCol] = Icon.SNAKE_HEAD.symbol;
+
+            if (snakeAte) { //if food piece, no need to remove tail as snake has been lengthened by 1
+                System.out.println("\tnyom nyom");
+                ++points;
+                snakePieces.add(removedTail);
+                continuePlay = addRandomFoodPiece(); //tries to add new piece of food, and declares win for player if it can't
+            } else {
+                System.out.println();
+
+
+            }
+
+        }
+
+        if (head.getCol() < board[head.getRow()].length) {
+            //change old head to snake body icon
+            board[head.getRow()][head.getCol()] = Icon.SNAKE_BODY.symbol;
+        }
+
+
+        if (!snakeAte && removedTail.getCol() < board[removedTail.getRow()].length) {
             board[removedTail.getRow()][removedTail.getCol()] = Icon.BLANK.symbol; //snake redraw doesn't redraw whole board, so this is necessary
             freeSpots.add(removedTail);
         }
@@ -360,8 +397,8 @@ public class Snakey {
      * Fix row or column locations that go out of bounds by wrapping around.
      *
      * @param rowOrCol The new location to check and change if needed.
-     * @param max The length of the board (if row changes being checked) or length of the row (if columns)
-     *            - that is, one space more than the final index.
+     * @param max      The length of the board (if row changes being checked) or length of the row (if columns)
+     *                 - that is, one space more than the final index.
      * @return Returns the in-bounds location, which is wrapped around if the value is at either max or min to its equivalent
      * opposite, otherwise returning the start value.
      */
@@ -370,7 +407,7 @@ public class Snakey {
         int min = 0;
 
         if (rowOrCol < min) {
-            return  max; //going up, back to bottom
+            return max; //going up, back to bottom
         }
 
         if (rowOrCol > max) {
@@ -386,7 +423,7 @@ public class Snakey {
         FOOD('O'),
         SNAKE_BODY('s'),
         SNAKE_HEAD('S'),
-        WALL('|');
+        WALL('#');
 
         private final char symbol;
 
