@@ -11,6 +11,7 @@ public class Snakey {
     private final Deque<PlaceMarker> snakePieces;
 
     private final List<PlaceMarker> wallLocations; //to reset board to initial state later.
+    private final List<PlaceMarker> tunnelLocations;
     private final Deque<PlaceMarker> startSnakeLocations;
     private final List<PlaceMarker> freeSpots; //for adding food pieces efficiently.
     private final int longestRowLength;
@@ -32,11 +33,11 @@ public class Snakey {
             "----#-------".toCharArray(),
             "----#-------".toCharArray(),
             "------".toCharArray(),
-            "------------".toCharArray(),
-            "------------".toCharArray(),
+            "  ----------".toCharArray(),
+            "  ----------".toCharArray(),
             "------".toCharArray(),
             "------".toCharArray(),
-            "--------#---".toCharArray(),
+            "---- ---#---".toCharArray(),
             "-----------#".toCharArray(),
             "------".toCharArray(),
 
@@ -45,6 +46,7 @@ public class Snakey {
     public Snakey() {
 
         wallLocations = new ArrayList<>();
+        tunnelLocations = new ArrayList<>();
         startSnakeLocations = new ArrayDeque<>();
         freeSpots = new LinkedList<>();
 
@@ -64,6 +66,8 @@ public class Snakey {
 
                 if (board[i][j] == Icon.WALL.symbol) {
                     wallLocations.add(nextPlace);
+                } else if (board[i][j] == Icon.TUNNEL.symbol) {
+                    tunnelLocations.add(nextPlace);
                 } else {
                     freeSpots.add(nextPlace);
                 }
@@ -104,6 +108,10 @@ public class Snakey {
         addItemsToBoard(wallLocations, Icon.WALL);
     }
 
+    private void addTunnelsToBoard() {
+        addItemsToBoard(tunnelLocations, Icon.TUNNEL);
+    }
+
     private void addItemsToBoard(Collection<PlaceMarker> placeMarkers, Icon icon) {
         for (PlaceMarker piece : placeMarkers) {
 
@@ -126,6 +134,7 @@ public class Snakey {
         }
 
         addWallsToBoard();
+        addTunnelsToBoard();
 
         snakePieces.clear();
         snakePieces.addAll(startSnakeLocations);
@@ -156,7 +165,7 @@ public class Snakey {
         System.out.print("   ");
 
         for (int i = 0; i < longestRowLength; ++i) { //col markers a,b,c...z
-            System.out.print(  "_" + (char) (i % 26 + 'a') );
+            System.out.print("_" + (char) (i % 26 + 'a'));
         }
 
         System.out.println();
@@ -164,16 +173,14 @@ public class Snakey {
         int i = -1;
 
         for (char[] line : board) {
-
-            System.out.print( (++i < 10 ? " " : "") + i + "| "); //row markers 0-9 (repeat at 10)
+            System.out.print((++i < 10 ? " " : "") + i + "| "); //row markers 0-9 (repeat at 10)
 
             for (char square : line) {
-
-
-
                 System.out.print(square + " ");
             }
+
             System.out.println();
+
         }
 
     }
@@ -196,7 +203,7 @@ public class Snakey {
 
             System.out.print("points: " + points + ", location: " + currentCol + ", " + currentRow);
 
-            boolean inTunnel = first.getCol() >= board[currentRow].length;
+            boolean inTunnel = (first.getCol() >= board[currentRow].length) || (board[first.getRow()][first.getCol()] == Icon.TUNNEL.symbol);
 
             if (inTunnel) {
                 System.out.print(" [IN TUNNEL]");
@@ -321,7 +328,7 @@ public class Snakey {
      * Move the snake on the board by checking if the move wanted is valid,
      * adding the location of the new head piece of the snake to its list,
      * and removing the tail in the case that no food was eaten. If food
-     * was eaten, the tail is not removed and the snake increases in size by 1.
+     * was eaten, the tail is re-added and the snake increases in size by 1.
      *
      * @param rowChange An int representing the change in row. For example, -1 means move 1 row back.
      * @param colChange An int representing the change in column. For example, 1 means the column to the right.
@@ -331,13 +338,10 @@ public class Snakey {
      * break out of the gameplay loop in the main method.
      */
     private boolean moveSnake(int rowChange, int colChange) {
-        int min = 0;
-        int max = board.length - 1; //NB: requiring a symmetrical board here (same min/max values for row & column)
+
         boolean continuePlay = true;
 
         PlaceMarker head = snakePieces.getFirst();
-
-        System.out.print("h: " + head.getRow() + ", " + head.getCol());
 
         //fix at boundaries by wrapping around.
         //WALLS are marked with a special character, if they exist.
@@ -365,7 +369,7 @@ public class Snakey {
         //NB "tunnels" do not cause GAME OVER collisions - this would be unfair.
         boolean snakeAte = false;
 
-        if (newCol < board[newRow].length) {
+        if (newCol < board[newRow].length && board[newRow][newCol] != Icon.TUNNEL.symbol) {
 
             //game over check
             if (board[newRow][newCol] == Icon.SNAKE_BODY.symbol ||
@@ -397,13 +401,13 @@ public class Snakey {
 
         }
 
-        if (head.getCol() < board[head.getRow()].length) {
+        if (head.getCol() < board[head.getRow()].length && board[head.getRow()][head.getCol()] != Icon.TUNNEL.symbol) {
             //change old head to snake body icon
             board[head.getRow()][head.getCol()] = Icon.SNAKE_BODY.symbol;
         }
 
 
-        if (!snakeAte && removedTail.getCol() < board[removedTail.getRow()].length) {
+        if (!snakeAte && removedTail.getCol() < board[removedTail.getRow()].length && board[removedTail.getRow()][removedTail.getCol()] != Icon.TUNNEL.symbol) {
             board[removedTail.getRow()][removedTail.getCol()] = Icon.BLANK.symbol; //snake redraw doesn't redraw whole board, so this is necessary
             freeSpots.add(removedTail);
         }
@@ -443,7 +447,8 @@ public class Snakey {
         FOOD('O'),
         SNAKE_BODY('s'),
         SNAKE_HEAD('S'),
-        WALL('#');
+        WALL('#'),
+        TUNNEL(' ');
 
         private final char symbol;
 
