@@ -22,6 +22,9 @@ Getting the Minimal-Spanning Tree of a group of Edges using Kruskal's Algorithm.
 ## Maze Solver
 Using a depth-first search to find a maze exit.
 
+## Primm
+Implementation of the Primm-Jarnik Minimal-Spanning Tree algorithm.
+
 ## Snakey
 A quick-and-dirty console implementation of Snake game logic.
 
