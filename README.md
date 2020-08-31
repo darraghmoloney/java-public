@@ -16,6 +16,9 @@ Investigating a "Travelling Salesperson" problem using a mixture of Monte Carlo 
 ## Hangman AI
 Using statistics to guess randomly chosen dictionary words.
 
+## Krusky
+Getting the Minimal-Spanning Tree of a group of Edges using Kruskal's Algorithm.
+
 ## Maze Solver
 Using a depth-first search to find a maze exit.
 
