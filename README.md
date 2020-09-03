@@ -4,6 +4,9 @@ Programming projects in Java
 Some of the programming projects I've completed in Java, based on both course-work, online challenges and own ideas.
 
 ---
+## Chez
+Console-based sort-of playable chess board simulation with piece Objects made as sub-classes of the Piece abstract class.
+
 ## DFS Tracking
 Using a depth-first search to find the length of all possible paths that can be explored and return the longest ones.
 
