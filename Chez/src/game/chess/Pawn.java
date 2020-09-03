@@ -4,7 +4,7 @@ import java.util.Scanner;
 
 class Pawn extends Piece {
 
-    final static  int WHITE_HOME_ROW = 7;
+    final static int WHITE_HOME_ROW = 7;
     final static int BLACK_HOME_ROW = 0;
 
     Pawn(Color color) {
@@ -33,74 +33,57 @@ class Pawn extends Piece {
             return false;
         }
 
+        if (COLOR == Color.WHITE && newRow >= currentRow ||
+                COLOR == Color.BLACK && newRow <= currentRow
+        ) {
+            return false;
+        }
+
+        int enemyHomeIndex = COLOR == Color.WHITE ? BLACK_HOME_ROW : WHITE_HOME_ROW;
+
         if (newCol == currentCol) { //straight line progression
-            
+
 
             if (gameBoard[newRow][newCol] != null) {
                 System.out.println("can't move pawn - blocked");
                 return false;
             }
 
-            if (this.COLOR == Color.WHITE && newRow < currentRow) { //moving UP board
+            gameBoard[currentRow][currentCol] = null;
 
-                gameBoard[currentRow][currentCol] = null;
+            //en passant check & handling.
+            checkEnPassant(gameBoard, newRow, newCol);
 
-                //en passant check & handling.
-                checkEnPassant(gameBoard, newRow, newCol);
 
-                //convert to queen at enemy home row.
-                //NB player can technically convert pawn to ANY piece, but the queen is the most powerful so why
-                //would anyone choose a different one?
-                if (newRow == BLACK_HOME_ROW) {
-                    Piece newQueen = new Queen(Color.WHITE, newRow, newCol);
-                    gameBoard[newRow][newCol] = newQueen;
+            //convert to queen at enemy home row.
+            //NB player can technically convert pawn to ANY piece, but the queen is the most powerful so why
+            //would anyone choose a different one?
+            if (newRow == enemyHomeIndex) {
+                Piece newQueen = new Queen(this.COLOR, newRow, newCol);
+                gameBoard[newRow][newCol] = newQueen;
 
-                    newQueen.timesMoved = timesMoved;
-                    return true;
-                }
-
-                currentRow = newRow;
-                gameBoard[currentRow][currentCol] = this;
-
-                ++timesMoved;
+                newQueen.timesMoved = timesMoved;
                 return true;
             }
 
-            if (this.COLOR == Color.BLACK && newRow > currentRow) {
-                gameBoard[currentRow][currentCol] = null;
+            currentRow = newRow;
+            gameBoard[currentRow][currentCol] = this;
 
-                //en passant check & handling.
-
-                checkEnPassant(gameBoard, newRow, newCol);
-
-                //queenifying
-                if (newRow == WHITE_HOME_ROW) {
-                    Piece newQueen = new Queen(Color.BLACK, newRow, newCol);
-                    gameBoard[newRow][newCol] = newQueen;
-
-                    newQueen.timesMoved = timesMoved;
-                    return true;
-                }
-
-
-                currentRow = newRow;
-                gameBoard[currentRow][currentCol] = this;
-
-                ++timesMoved;
-                return true;
-            }
+            ++timesMoved;
+            return true;
 
         }
 
-        //attacking to board left.
-        if (newCol == currentCol - 1) {
+        //attacking to board left / right.
+        if (newCol == currentCol - 1 || newCol == currentCol + 1) {
 
             if (gameBoard[newRow][newCol] == null) {
                 System.out.println("cannot attack - no enemy piece at " + newRow + " " + newCol);
                 return false;
             }
 
-            if (this.COLOR == Color.WHITE && newRow == currentRow - 1) {
+            if (this.COLOR == Color.WHITE && newRow == currentRow - 1 ||
+                    this.COLOR == Color.BLACK && newRow == currentRow + 1) {
 
                 if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
 
@@ -108,8 +91,8 @@ class Pawn extends Piece {
                     gameBoard[currentRow][currentCol] = null;
 
                     //convert to queen if enemy home row
-                    if (newRow == BLACK_HOME_ROW) {
-                        Piece newQueen = new Queen(Color.WHITE, newRow, newCol);
+                    if (newRow == enemyHomeIndex) {
+                        Piece newQueen = new Queen(this.COLOR, newRow, newCol);
                         gameBoard[newRow][newCol] = newQueen;
 
                         newQueen.timesMoved = timesMoved;
@@ -124,88 +107,6 @@ class Pawn extends Piece {
                     ++timesMoved;
                     return true;
 
-                }
-            }
-
-            if (this.COLOR == Color.BLACK && newRow == currentRow + 1) {
-
-                if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
-
-                    gameBoard[newRow][newCol].captured = true;
-                    gameBoard[currentRow][currentCol] = null;
-
-                    //queenifying
-                    if (newRow == WHITE_HOME_ROW) {
-                        Piece newQueen = new Queen(Color.BLACK, newRow, newCol);
-                        gameBoard[newRow][newCol] = newQueen;
-
-                        newQueen.timesMoved = timesMoved;
-                        return true;
-                    }
-
-                    currentRow = newRow;
-                    currentCol = newCol;
-                    gameBoard[currentRow][currentCol] = this;
-
-                    ++timesMoved;
-                    return true;
-
-                }
-            }
-
-        }
-
-        //attacking to board right.
-        if (newCol == currentCol + 1) {
-
-            if (gameBoard[newRow][newCol] == null) {
-                System.out.println("cannot attack - no enemy piece at " + newRow + " " + newCol);
-                return false;
-            }
-
-            if (this.COLOR == Color.WHITE && newRow == currentRow - 1) {
-
-                if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
-
-                    gameBoard[currentRow][currentCol] = null;
-
-                    if (newRow == BLACK_HOME_ROW) {
-                        Piece newQueen = new Queen(Color.WHITE, newRow, newCol);
-                        gameBoard[newRow][newCol] = newQueen;
-
-                        newQueen.timesMoved = timesMoved;
-                        return true;
-                    }
-
-                    currentRow = newRow;
-                    currentCol = newCol;
-                    gameBoard[currentRow][currentCol] = this;
-
-                    ++timesMoved;
-                    return true;
-                }
-            }
-
-            if (this.COLOR == Color.BLACK && newRow == currentRow + 1) {
-
-                if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
-
-                    gameBoard[currentRow][currentCol] = null;
-
-                    if (newRow == WHITE_HOME_ROW) {
-                        Piece newQueen = new Queen(Color.BLACK, newRow, newCol);
-                        gameBoard[newRow][newCol] = newQueen;
-
-                        newQueen.timesMoved = timesMoved;
-                        return true;
-                    }
-
-                    currentRow = newRow;
-                    currentCol = newCol;
-                    gameBoard[currentRow][currentCol] = this;
-
-                    ++timesMoved;
-                    return true;
                 }
             }
 
@@ -214,7 +115,7 @@ class Pawn extends Piece {
         return false;
     }
 
-    private void checkEnPassant(Piece[][]gameBoard, int newRow, int newCol) {
+    private void checkEnPassant(Piece[][] gameBoard, int newRow, int newCol) {
         boolean enemyOnLeft = false;
         boolean enemyOnRight = false;
 
@@ -254,12 +155,10 @@ class Pawn extends Piece {
                     if (choice == 'l') {
                         leftEnemy.captured = true;
                         gameBoard[newRow][newCol - 1] = null;
-                    }
-                    else if (choice == 'r') {
+                    } else if (choice == 'r') {
                         rightEnemy.captured = true;
                         gameBoard[newRow][newCol + 1] = null;
-                    }
-                    else {
+                    } else {
                         if (Math.random() < 0.5) {
                             leftEnemy.captured = true;
                             gameBoard[newRow][newCol - 1] = null;
