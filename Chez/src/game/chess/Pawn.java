@@ -46,73 +46,7 @@ class Pawn extends Piece {
                 gameBoard[currentRow][currentCol] = null;
 
                 //en passant check & handling.
-                boolean enemyOnLeft = false;
-                boolean enemyOnRight = false;
-
-                if ((newCol - 1) >= 0 &&
-                        gameBoard[newRow][newCol - 1] != null &&
-                        gameBoard[newRow][newCol - 1].COLOR == ENEMY_COLOR) {
-                    enemyOnLeft = true;
-                }
-
-                if ((newCol + 1) < 8 &&
-                        gameBoard[newRow][newCol + 1] != null &&
-                        gameBoard[newRow][newCol + 1].COLOR == ENEMY_COLOR) {
-                    enemyOnRight = true;
-                }
-
-                //en passant enemy on both sides, choose highest value enemy, else prompt if same.
-                if (enemyOnLeft && enemyOnRight) {
-
-                    Piece leftEnemy = gameBoard[newRow][newCol - 1];
-                    Piece rightEnemy = gameBoard[newRow][newCol + 1];
-
-                    if (leftEnemy.VALUE > rightEnemy.VALUE) {
-                        leftEnemy.captured = true;
-                        gameBoard[newRow][newCol - 1] = null;
-                    } else if (rightEnemy.VALUE > leftEnemy.VALUE) {
-                        rightEnemy.captured = true;
-                        gameBoard[newRow][newCol + 1] = null;
-                    } else {
-                        System.out.print("en passant. capture left or right? (l/r): ");
-                        Scanner sc = new Scanner(System.in);
-                        String captureChoice = sc.next();
-
-                        if (captureChoice.length() > 0) {
-
-                            char choice = captureChoice.toLowerCase().charAt(0);
-
-                            if (choice == 'l') {
-                                leftEnemy.captured = true;
-                                gameBoard[newRow][newCol - 1] = null;
-                            }
-                            else if (choice == 'r') {
-                                rightEnemy.captured = true;
-                                gameBoard[newRow][newCol + 1] = null;
-                            }
-                            else {
-                                if (Math.random() < 0.5) {
-                                    leftEnemy.captured = true;
-                                    gameBoard[newRow][newCol - 1] = null;
-                                } else {
-                                    rightEnemy.captured = true;
-                                    gameBoard[newRow][newCol + 1] = null;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                //en passant enemy on one side only.
-                if (enemyOnLeft & !enemyOnRight) {
-                    gameBoard[newRow][newCol - 1].captured = true;
-                    gameBoard[newRow][newCol - 1] = null;
-                }
-
-                if (enemyOnRight & !enemyOnLeft) {
-                    gameBoard[newRow][newCol + 1].captured = true;
-                    gameBoard[newRow][newCol + 1] = null;
-                }
+                checkEnPassant(gameBoard, newRow, newCol);
 
                 //convert to queen at enemy home row.
                 //NB player can technically convert pawn to ANY piece, but the queen is the most powerful so why
@@ -127,7 +61,7 @@ class Pawn extends Piece {
 
                 currentRow = newRow;
                 gameBoard[currentRow][currentCol] = this;
-                
+
                 ++timesMoved;
                 return true;
             }
@@ -136,73 +70,8 @@ class Pawn extends Piece {
                 gameBoard[currentRow][currentCol] = null;
 
                 //en passant check & handling.
-                boolean enemyOnLeft = false;
-                boolean enemyOnRight = false;
 
-                if ((newCol - 1) >= 0 &&
-                        gameBoard[newRow][newCol - 1] != null &&
-                        gameBoard[newRow][newCol - 1].COLOR == ENEMY_COLOR) {
-                    enemyOnLeft = true;
-                }
-
-                if ((newCol + 1) < 8 &&
-                        gameBoard[newRow][newCol + 1] != null &&
-                        gameBoard[newRow][newCol + 1].COLOR == ENEMY_COLOR) {
-                    enemyOnRight = true;
-                }
-
-                //en passant enemy on both sides, choose highest value enemy, else prompt if same.
-                if (enemyOnLeft && enemyOnRight) {
-
-                    Piece leftEnemy = gameBoard[newRow][newCol - 1];
-                    Piece rightEnemy = gameBoard[newRow][newCol + 1];
-
-                    if (leftEnemy.VALUE > rightEnemy.VALUE) {
-                        leftEnemy.captured = true;
-                        gameBoard[newRow][newCol - 1] = null;
-                    } else if (rightEnemy.VALUE > leftEnemy.VALUE) {
-                        rightEnemy.captured = true;
-                        gameBoard[newRow][newCol + 1] = null;
-                    } else {
-                        System.out.print("en passant. capture left or right? (l/r): ");
-                        Scanner sc = new Scanner(System.in);
-                        String captureChoice = sc.next();
-
-                        if (captureChoice.length() > 0) {
-
-                            char choice = captureChoice.toLowerCase().charAt(0);
-
-                            if (choice == 'l') {
-                                leftEnemy.captured = true;
-                                gameBoard[newRow][newCol - 1] = null;
-                            }
-                            else if (choice == 'r') {
-                                rightEnemy.captured = true;
-                                gameBoard[newRow][newCol + 1] = null;
-                            }
-                            else {
-                                if (Math.random() < 0.5) {
-                                    leftEnemy.captured = true;
-                                    gameBoard[newRow][newCol - 1] = null;
-                                } else {
-                                    rightEnemy.captured = true;
-                                    gameBoard[newRow][newCol + 1] = null;
-                                }
-                            }
-                        }
-                    }
-                }
-
-                //en passant - enemy on one side only.
-                if (enemyOnLeft & !enemyOnRight) {
-                    gameBoard[newRow][newCol - 1].captured = true;
-                    gameBoard[newRow][newCol - 1] = null;
-                }
-
-                if (enemyOnRight & !enemyOnLeft) {
-                    gameBoard[newRow][newCol + 1].captured = true;
-                    gameBoard[newRow][newCol + 1] = null;
-                }
+                checkEnPassant(gameBoard, newRow, newCol);
 
                 //queenifying
                 if (newRow == WHITE_HOME_ROW) {
@@ -343,6 +212,77 @@ class Pawn extends Piece {
         }
 
         return false;
+    }
+
+    private void checkEnPassant(Piece[][]gameBoard, int newRow, int newCol) {
+        boolean enemyOnLeft = false;
+        boolean enemyOnRight = false;
+
+        if ((newCol - 1) >= 0 &&
+                gameBoard[newRow][newCol - 1] != null &&
+                gameBoard[newRow][newCol - 1].COLOR == ENEMY_COLOR) {
+            enemyOnLeft = true;
+        }
+
+        if ((newCol + 1) < 8 &&
+                gameBoard[newRow][newCol + 1] != null &&
+                gameBoard[newRow][newCol + 1].COLOR == ENEMY_COLOR) {
+            enemyOnRight = true;
+        }
+
+        //en passant enemy on both sides, choose highest value enemy, else prompt if same.
+        if (enemyOnLeft && enemyOnRight) {
+
+            Piece leftEnemy = gameBoard[newRow][newCol - 1];
+            Piece rightEnemy = gameBoard[newRow][newCol + 1];
+
+            if (leftEnemy.VALUE > rightEnemy.VALUE) {
+                leftEnemy.captured = true;
+                gameBoard[newRow][newCol - 1] = null;
+            } else if (rightEnemy.VALUE > leftEnemy.VALUE) {
+                rightEnemy.captured = true;
+                gameBoard[newRow][newCol + 1] = null;
+            } else {
+                System.out.print("en passant. capture left or right? (l/r): ");
+                Scanner sc = new Scanner(System.in);
+                String captureChoice = sc.next();
+
+                if (captureChoice.length() > 0) {
+
+                    char choice = captureChoice.toLowerCase().charAt(0);
+
+                    if (choice == 'l') {
+                        leftEnemy.captured = true;
+                        gameBoard[newRow][newCol - 1] = null;
+                    }
+                    else if (choice == 'r') {
+                        rightEnemy.captured = true;
+                        gameBoard[newRow][newCol + 1] = null;
+                    }
+                    else {
+                        if (Math.random() < 0.5) {
+                            leftEnemy.captured = true;
+                            gameBoard[newRow][newCol - 1] = null;
+                        } else {
+                            rightEnemy.captured = true;
+                            gameBoard[newRow][newCol + 1] = null;
+                        }
+                    }
+                }
+            }
+        }
+
+        //en passant - enemy on one side only.
+        if (enemyOnLeft & !enemyOnRight) {
+            gameBoard[newRow][newCol - 1].captured = true;
+            gameBoard[newRow][newCol - 1] = null;
+        }
+
+        if (enemyOnRight & !enemyOnLeft) {
+            gameBoard[newRow][newCol + 1].captured = true;
+            gameBoard[newRow][newCol + 1] = null;
+        }
+
     }
 
 
