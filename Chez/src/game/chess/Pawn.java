@@ -120,12 +120,14 @@ class Pawn extends Piece {
                 if (newRow == BLACK_HOME_ROW) {
                     Piece newQueen = new Queen(Color.WHITE, newRow, newCol);
                     gameBoard[newRow][newCol] = newQueen;
+
                     newQueen.timesMoved = timesMoved;
                     return true;
                 }
 
                 currentRow = newRow;
                 gameBoard[currentRow][currentCol] = this;
+                
                 ++timesMoved;
                 return true;
             }
@@ -206,6 +208,7 @@ class Pawn extends Piece {
                 if (newRow == WHITE_HOME_ROW) {
                     Piece newQueen = new Queen(Color.BLACK, newRow, newCol);
                     gameBoard[newRow][newCol] = newQueen;
+
                     newQueen.timesMoved = timesMoved;
                     return true;
                 }
@@ -213,6 +216,7 @@ class Pawn extends Piece {
 
                 currentRow = newRow;
                 gameBoard[currentRow][currentCol] = this;
+
                 ++timesMoved;
                 return true;
             }
@@ -238,6 +242,7 @@ class Pawn extends Piece {
                     if (newRow == BLACK_HOME_ROW) {
                         Piece newQueen = new Queen(Color.WHITE, newRow, newCol);
                         gameBoard[newRow][newCol] = newQueen;
+
                         newQueen.timesMoved = timesMoved;
                         return true;
                     }
@@ -264,6 +269,7 @@ class Pawn extends Piece {
                     if (newRow == WHITE_HOME_ROW) {
                         Piece newQueen = new Queen(Color.BLACK, newRow, newCol);
                         gameBoard[newRow][newCol] = newQueen;
+
                         newQueen.timesMoved = timesMoved;
                         return true;
                     }
@@ -297,6 +303,7 @@ class Pawn extends Piece {
                     if (newRow == BLACK_HOME_ROW) {
                         Piece newQueen = new Queen(Color.WHITE, newRow, newCol);
                         gameBoard[newRow][newCol] = newQueen;
+
                         newQueen.timesMoved = timesMoved;
                         return true;
                     }
@@ -319,6 +326,7 @@ class Pawn extends Piece {
                     if (newRow == WHITE_HOME_ROW) {
                         Piece newQueen = new Queen(Color.BLACK, newRow, newCol);
                         gameBoard[newRow][newCol] = newQueen;
+
                         newQueen.timesMoved = timesMoved;
                         return true;
                     }

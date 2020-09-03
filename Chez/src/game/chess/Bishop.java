@@ -53,6 +53,9 @@ class Bishop extends Piece {
             currentRow = checkRow;
             currentCol  = checkCol;
             gameBoard[currentRow][currentCol] = this;
+
+            ++timesMoved;
+            return true;
         }
 
         //attacking
@@ -64,6 +67,9 @@ class Bishop extends Piece {
             currentRow = checkRow;
             currentCol = checkCol;
             gameBoard[currentRow][currentCol] = this;
+
+            ++timesMoved;
+            return true;
 
         }
 

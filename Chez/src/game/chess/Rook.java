@@ -104,6 +104,7 @@ class Rook extends Piece {
                 gameBoard[currentRow][currentCol] = null;
                 currentCol = newCol;
                 gameBoard[currentRow][currentCol] = this;
+
                 ++timesMoved;
                 return true;
 
@@ -115,6 +116,7 @@ class Rook extends Piece {
                 gameBoard[currentRow][currentCol] = null;
                 currentCol = newCol;
                 gameBoard[currentRow][currentCol] = this;
+
                 ++timesMoved;
                 return true;
 
@@ -148,6 +150,7 @@ class Rook extends Piece {
                 currentRow = newRow;
                 gameBoard[currentRow][currentCol] = this;
                 System.out.println(currentRow + "," + currentCol + ": " + gameBoard[currentRow][currentCol]);
+
                 ++timesMoved;
                 return true;
             }
@@ -159,6 +162,7 @@ class Rook extends Piece {
                 gameBoard[currentRow][currentCol] = null;
                 currentRow = newRow;
                 gameBoard[currentRow][currentCol] = this;
+
                 ++timesMoved;
                 return true;
             }

@@ -26,6 +26,8 @@ class King extends Piece {
             currentRow = newRow;
             currentCol = newCol;
             gameBoard[currentRow][currentCol] = this;
+
+            ++timesMoved;
             return true;
         }
 
@@ -35,6 +37,8 @@ class King extends Piece {
             currentRow = newRow;
             currentCol = newCol;
             gameBoard[currentRow][currentCol] = this;
+
+            ++timesMoved;
             return true;
         }
 

@@ -68,6 +68,8 @@ class Queen extends Piece {
             currentRow = checkRow;
             currentCol = checkCol;
             gameBoard[currentRow][currentCol] = this;
+
+            ++timesMoved;
             return true;
         }
 
@@ -82,6 +84,8 @@ class Queen extends Piece {
             currentRow = checkRow;
             currentCol = checkCol;
             gameBoard[currentRow][currentCol] = this;
+
+            ++timesMoved;
             return true;
 
         }
