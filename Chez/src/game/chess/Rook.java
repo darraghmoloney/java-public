@@ -33,6 +33,19 @@ class Rook extends Piece {
             int colChange = Math.abs(currentCol - newCol); //number of spaces to move.
             int parity = (currentCol < newCol) ? 1 : -1;
 
+
+            int checkCol = currentCol + parity;
+
+            //checking square by square until the spot before.
+            for (int i = 0; i < (colChange - 1); ++i) {
+                if (gameBoard[currentRow][checkCol] != null) { //blocked.
+                    System.out.println("can't move - blocked");
+                    return false;
+                }
+                checkCol += parity;
+            }
+
+
             //castling check.
             if (newCol + parity >= 0 && newCol + parity < 8 &&
                     gameBoard[currentRow][newCol + parity] != null &&
@@ -46,56 +59,30 @@ class Rook extends Piece {
 
                     if (timesMoved == 0 && kingPiece.timesMoved == 0) {
 
-                        int checkCol = currentCol + parity;
+                        System.out.print("do you want to castle? (y/n): ");
 
-                        boolean freePathToNewSquare = true;
+                        Scanner sc = new Scanner(System.in);
+                        String castleInput = sc.next();
 
-                        //check squares are free between both.
-                        for (int i = 0; i < colChange; ++i) {
-                            if (gameBoard[currentRow][checkCol] != null) {
-                                freePathToNewSquare = false;
-                            }
-                            checkCol += parity;
-                        }
+                        if (castleInput.length() > 0 && castleInput.toLowerCase().charAt(0) == 'y') {
 
+                            //move rook.
+                            gameBoard[currentRow][currentCol] = null;
+                            currentCol = newCol;
+                            gameBoard[currentRow][currentCol] = this;
 
-                        if (freePathToNewSquare) {
-                            System.out.print("do you want to castle? (y/n): ");
+                            //move king.
+                            gameBoard[currentRow][newCol + parity] = null;
+                            kingPiece.currentCol = newCol - parity;
+                            gameBoard[currentRow][kingPiece.currentCol] = kingPiece;
 
-                            Scanner sc = new Scanner(System.in);
-                            String castleInput = sc.next();
+                            ++timesMoved;
+                            ++kingPiece.timesMoved;
+                            return true;
 
-                            if (castleInput.length() > 0 && castleInput.toLowerCase().charAt(0) == 'y') {
-
-                                //move rook.
-                                gameBoard[currentRow][currentCol] = null;
-                                currentCol = newCol;
-                                gameBoard[currentRow][currentCol] = this;
-
-                                //move king.
-                                gameBoard[currentRow][newCol + parity] = null;
-                                kingPiece.currentCol = newCol - parity;
-                                gameBoard[currentRow][kingPiece.currentCol] = kingPiece;
-
-                                ++timesMoved;
-                                ++kingPiece.timesMoved;
-                                return true;
-
-                            }
                         }
                     }
                 }
-            }
-
-            int checkCol = currentCol + parity;
-
-            //checking square by square until the spot before.
-            for (int i = 0; i < (colChange - 1); ++i) {
-                if (gameBoard[currentRow][checkCol] != null) { //blocked.
-                    System.out.println("can't move - blocked");
-                    return false;
-                }
-                checkCol += parity;
             }
 
             //checking actual spot for attacking etc.
