@@ -12,7 +12,10 @@ class Bishop extends Piece {
 
 
     @Override
-    boolean move(Piece[][] gameBoard, int newRow, int newCol) {
+    boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
+
+        int newRow = rowAndCol[0];
+        int newCol = rowAndCol[1];
 
         if (Piece.outOfBounds(newRow) || Piece.outOfBounds(newCol)) {
             System.out.println("out of bounds");
@@ -24,6 +27,10 @@ class Bishop extends Piece {
             return false;
         }
 
+        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == this.COLOR) {
+            return false;
+        }
+
         int totalRowChange = Math.abs(currentRow - newRow);
         int totalColChange = Math.abs(currentCol - newCol);
 
@@ -32,26 +39,15 @@ class Bishop extends Piece {
             return false;
         }
 
-        int rowParity = currentRow < newRow ? 1 : -1; //the change - down (+) or up (-)
-        int colParity = currentCol < newCol ? 1 : -1;
-
-        int checkRow = currentRow + rowParity;
-        int checkCol = currentCol + colParity;
-
-        for (int i = 0; i < totalRowChange - 1; ++i) {
-            if (gameBoard[checkRow][checkCol] != null) {
-                System.out.println("blocked at " + checkRow + "," + checkCol);
-                return false;
-            }
-            checkRow += rowParity;
-            checkCol += colParity;
+        if (!checkClearPath(gameBoard, newRow, newCol)) {
+            return false;
         }
 
         //check final spot.
-        if (gameBoard[checkRow][checkCol] == null) {
+        if (gameBoard[newRow][newCol] == null) {
             gameBoard[currentRow][currentCol] = null;
-            currentRow = checkRow;
-            currentCol  = checkCol;
+            currentRow = newRow;
+            currentCol  = newCol;
             gameBoard[currentRow][currentCol] = this;
 
             ++timesMoved;
@@ -59,13 +55,19 @@ class Bishop extends Piece {
         }
 
         //attacking
-        if (gameBoard[checkRow][checkCol].COLOR == ENEMY_COLOR) {
+        if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
             System.out.println("attacking");
-            gameBoard[checkRow][checkCol].captured = true;
+            gameBoard[newRow][newCol].captured = true;
+
+            if (COLOR == Color.WHITE) {
+                points[0] += gameBoard[newRow][newCol].VALUE;
+            } else {
+                points[1] += gameBoard[newRow][newCol].VALUE;
+            }
 
             gameBoard[currentRow][currentCol] = null;
-            currentRow = checkRow;
-            currentCol = checkCol;
+            currentRow = newRow;
+            currentCol = newCol;
             gameBoard[currentRow][currentCol] = this;
 
             ++timesMoved;
@@ -85,4 +87,7 @@ class Bishop extends Piece {
     int getPointsValue() {
         return 3;
     }
+
+    @Override
+    String getIcon() { return COLOR == Color.BLACK ? "♝" : "♗"; }
 }

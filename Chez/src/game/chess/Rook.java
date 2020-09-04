@@ -14,7 +14,10 @@ class Rook extends Piece {
 
 
     @Override
-    boolean move(Piece[][] gameBoard, int newRow, int newCol) {
+    boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
+
+        int newRow = rowAndCol[0];
+        int newCol = rowAndCol[1];
 
         if (Piece.outOfBounds(newRow) || Piece.outOfBounds(newCol)) {
             System.out.println("out of bounds");
@@ -27,137 +30,134 @@ class Rook extends Piece {
             return false;
         }
 
-        //horizontal move
-        if (currentCol - newCol != 0) {
-            System.out.println("horizontal");
-            int colChange = Math.abs(currentCol - newCol); //number of spaces to move.
-            int parity = (currentCol < newCol) ? 1 : -1;
+        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == this.COLOR) {
+            return false;
+        }
+
+        if (!checkClearPath(gameBoard, newRow, newCol)) {
+            return false;
+        }
 
 
-            int checkCol = currentCol + parity;
+        //castling check
+        if (currentCol - newCol != 0 && checkCastling(gameBoard, newCol)) {
+            return true;
+        }
 
-            //checking square by square until the spot before.
-            for (int i = 0; i < (colChange - 1); ++i) {
-                if (gameBoard[currentRow][checkCol] != null) { //blocked.
-                    System.out.println("can't move - blocked");
-                    return false;
-                }
-                checkCol += parity;
+
+//            if ((currentCol == 0 && newCol == 2 || currentCol == 7 && newCol == 5) &&
+//                    gameBoard[currentRow][4] != null &&
+//                    gameBoard[currentRow][4] instanceof King
+//            ) {
+//
+//                Piece kingPiece = gameBoard[currentRow][4];
+//
+//                if (kingPiece.COLOR != ENEMY_COLOR &&
+//                        (COLOR == Color.WHITE && currentRow == 7 ||
+//                                COLOR == Color.BLACK && currentRow == 0)) {
+//
+//                    if (timesMoved == 0 && kingPiece.timesMoved == 0) {
+//
+//                        System.out.print("do you want to castle? (y/n): ");
+//
+//                        Scanner sc = new Scanner(System.in);
+//                        String castleInput = sc.next();
+//
+//                        if (castleInput.length() > 0 && castleInput.toLowerCase().charAt(0) == 'y') {
+//
+//                            int colParity = currentCol < newCol ? 1 : -1;
+//
+//                            //move rook.
+//                            gameBoard[currentRow][currentCol] = null;
+//                            currentCol = newCol;
+//                            gameBoard[currentRow][currentCol] = this;
+//
+//                            //move king.
+//                            gameBoard[currentRow][4] = null;
+//                            kingPiece.currentCol = newCol - colParity;
+//                            gameBoard[currentRow][kingPiece.currentCol] = kingPiece;
+//
+//                            ++timesMoved;
+//                            ++kingPiece.timesMoved;
+//                            return true;
+//
+//                        }
+//                    }
+//                }
+//            }
+
+//        }
+
+
+
+
+        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
+
+            gameBoard[newRow][newCol].captured = true;
+
+            if (COLOR == Color.WHITE) {
+                points[0] += gameBoard[newRow][newCol].VALUE;
+            } else {
+                points[1] += gameBoard[newRow][newCol].VALUE;
             }
 
+        }
 
-            //castling check.
-            if (newCol + parity >= 0 && newCol + parity < 8 &&
-                    gameBoard[currentRow][newCol + parity] != null &&
-                    gameBoard[currentRow][newCol + parity] instanceof King) {
+        gameBoard[currentRow][currentCol] = null;
+        currentRow = newRow;
+        currentCol = newCol;
+        gameBoard[currentRow][currentCol] = this;
 
-                Piece kingPiece = gameBoard[currentRow][newCol + parity];
+        ++timesMoved;
+        return true;
 
-                if (kingPiece.COLOR != ENEMY_COLOR &&
-                        (COLOR == Color.WHITE && currentRow == 7 ||
-                                COLOR == Color.BLACK && currentRow == 0)) {
+    }
 
-                    if (timesMoved == 0 && kingPiece.timesMoved == 0) {
+    private boolean checkCastling(Piece[][] gameBoard, int newCol) {
 
-                        System.out.print("do you want to castle? (y/n): ");
+        if ((currentCol == 0 && newCol == 3 || currentCol == 7 && newCol == 5) &&
+                gameBoard[currentRow][4] != null &&
+                gameBoard[currentRow][4] instanceof King
+        ) {
 
-                        Scanner sc = new Scanner(System.in);
-                        String castleInput = sc.next();
+            Piece kingPiece = gameBoard[currentRow][4];
 
-                        if (castleInput.length() > 0 && castleInput.toLowerCase().charAt(0) == 'y') {
+            if (kingPiece.COLOR != ENEMY_COLOR &&
+                    (COLOR == Color.WHITE && currentRow == 7 ||COLOR == Color.BLACK && currentRow == 0)) {
 
-                            //move rook.
-                            gameBoard[currentRow][currentCol] = null;
-                            currentCol = newCol;
-                            gameBoard[currentRow][currentCol] = this;
+                if (timesMoved == 0 && kingPiece.timesMoved == 0) {
 
-                            //move king.
-                            gameBoard[currentRow][newCol + parity] = null;
-                            kingPiece.currentCol = newCol - parity;
-                            gameBoard[currentRow][kingPiece.currentCol] = kingPiece;
+                    System.out.print("do you want to castle? (y/n): ");
 
-                            ++timesMoved;
-                            ++kingPiece.timesMoved;
-                            return true;
+                    Scanner sc = new Scanner(System.in);
+                    String castleInput = sc.next();
 
-                        }
+                    if (castleInput.length() > 0 && castleInput.toLowerCase().charAt(0) == 'y') {
+
+                        int colParity = currentCol < newCol ? 1 : -1;
+
+                        //move rook.
+                        gameBoard[currentRow][currentCol] = null;
+                        currentCol = newCol;
+                        gameBoard[currentRow][currentCol] = this;
+
+                        //move king.
+                        gameBoard[currentRow][4] = null;
+                        kingPiece.currentCol = newCol - colParity;
+                        gameBoard[currentRow][kingPiece.currentCol] = kingPiece;
+
+                        ++timesMoved;
+                        ++kingPiece.timesMoved;
+                        return true;
+
                     }
                 }
             }
-
-            //checking actual spot for attacking etc.
-            if (gameBoard[currentRow][newCol] == null) {
-
-                gameBoard[currentRow][currentCol] = null;
-                currentCol = newCol;
-                gameBoard[currentRow][currentCol] = this;
-
-                ++timesMoved;
-                return true;
-
-            }
-
-            if (gameBoard[currentRow][newCol].COLOR == ENEMY_COLOR) {
-
-                gameBoard[currentRow][newCol].captured = true;
-                gameBoard[currentRow][currentCol] = null;
-                currentCol = newCol;
-                gameBoard[currentRow][currentCol] = this;
-
-                ++timesMoved;
-                return true;
-
-            }
-
-            return false;
-
         }
-
-        //normal move - vertical
-        if (currentRow - newRow != 0) {
-
-            int rowChange = Math.abs(currentRow - newRow);
-            int parity = (currentRow < newRow) ? 1 : -1;
-
-            int checkRow = currentRow + parity;
-
-            for (int i = 0; i < (rowChange - 1); ++i) {
-                if (gameBoard[checkRow][currentCol] != null) {
-                    System.out.println(checkRow + " " + currentCol + " blocked");
-                    return false;
-                }
-                checkRow += parity;
-            }
-
-            if (gameBoard[checkRow][currentCol] == null) {
-
-                gameBoard[currentRow][currentCol] = null;
-                System.out.println(currentRow + "," + currentCol + ": " + gameBoard[currentRow][currentCol]);
-
-                currentRow = newRow;
-                gameBoard[currentRow][currentCol] = this;
-                System.out.println(currentRow + "," + currentCol + ": " + gameBoard[currentRow][currentCol]);
-
-                ++timesMoved;
-                return true;
-            }
-
-            if (gameBoard[checkRow][currentCol].COLOR == ENEMY_COLOR) {
-
-                gameBoard[checkRow][currentCol].captured = true;
-
-                gameBoard[currentRow][currentCol] = null;
-                currentRow = newRow;
-                gameBoard[currentRow][currentCol] = this;
-
-                ++timesMoved;
-                return true;
-            }
-        }
-
 
         return false;
     }
+
 
     @Override
     String getShortName() {
@@ -167,6 +167,11 @@ class Rook extends Piece {
     @Override
     int getPointsValue() {
         return 5;
+    }
+
+    @Override
+    String getIcon() {
+        return COLOR == Color.BLACK ? "♜" : "♖";
     }
 
 }

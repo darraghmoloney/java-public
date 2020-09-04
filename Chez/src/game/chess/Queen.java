@@ -11,7 +11,10 @@ class Queen extends Piece {
     }
 
     @Override
-    boolean move(Piece[][] gameBoard, int newRow, int newCol) {
+    boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
+
+        int newRow = rowAndCol[0];
+        int newCol = rowAndCol[1];
 
         if (Piece.outOfBounds(newRow) || Piece.outOfBounds(newCol)) {
             return false;
@@ -27,46 +30,19 @@ class Queen extends Piece {
             }
         }
 
-        int moves = Math.max(rowChange, colChange);
-
-        int rowParity = 0;
-        int colParity = 0;
-
-        if (currentRow < newRow) {
-            rowParity = 1;
-        } else if (currentRow > newRow) {
-            rowParity = -1;
+        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == this.COLOR) {
+            return false;
         }
 
-        if (currentCol < newCol) {
-            colParity = 1;
-        } else if (currentCol > newCol) {
-            colParity = -1;
+        if (!checkClearPath(gameBoard, newRow, newCol)) {
+            return false;
         }
-
-        int checkRow = currentRow + rowParity;
-        int checkCol = currentCol + colParity;
-
-
-        //blocking check.
-        for (int i = 0; i < (moves - 1); ++i) {
-
-            if (gameBoard[checkRow][checkCol] != null) {
-                System.out.println("move blocked at " + checkRow + "," + checkCol);
-                return false;
-            }
-
-            checkRow += rowParity;
-            checkCol += colParity;
-
-        }
-
 
         //final spot check.
-        if (gameBoard[checkRow][checkCol] == null) {
+        if (gameBoard[newRow][newCol] == null) {
             gameBoard[currentRow][currentCol] = null;
-            currentRow = checkRow;
-            currentCol = checkCol;
+            currentRow = newRow;
+            currentCol = newCol;
             gameBoard[currentRow][currentCol] = this;
 
             ++timesMoved;
@@ -74,15 +50,19 @@ class Queen extends Piece {
         }
 
         //attacking
-        if (gameBoard[checkRow][checkCol].COLOR == ENEMY_COLOR) {
-            System.out.println("attacking" + checkRow + "," + checkCol);
-            gameBoard[checkRow][checkCol].captured = true;
+        if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
 
-            System.out.println(currentRow + "," + currentCol);
+            gameBoard[newRow][newCol].captured = true;
+
+            if (COLOR == Color.WHITE) {
+                points[0] += gameBoard[newRow][newCol].VALUE;
+            } else {
+                points[1] += gameBoard[newRow][newCol].VALUE;
+            }
 
             gameBoard[currentRow][currentCol] = null;
-            currentRow = checkRow;
-            currentCol = checkCol;
+            currentRow = newRow;
+            currentCol = newCol;
             gameBoard[currentRow][currentCol] = this;
 
             ++timesMoved;
@@ -103,4 +83,7 @@ class Queen extends Piece {
     int getPointsValue() {
         return 9;
     }
+
+    @Override
+    String getIcon() { return COLOR == Color.BLACK ? "♛" : "♕"; }
 }

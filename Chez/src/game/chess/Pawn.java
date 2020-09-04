@@ -17,8 +17,10 @@ class Pawn extends Piece {
 
 
     @Override
-    public boolean move(Piece[][] gameBoard, int newRow, int newCol) {
+    public boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
 
+        int newRow = rowAndCol[0];
+        int newCol = rowAndCol[1];
 
         if (Piece.outOfBounds(newRow) || Piece.outOfBounds(newCol)) {
             return false;
@@ -39,6 +41,10 @@ class Pawn extends Piece {
             return false;
         }
 
+        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == this.COLOR) {
+            return false;
+        }
+
         int enemyHomeIndex = COLOR == Color.WHITE ? BLACK_HOME_ROW : WHITE_HOME_ROW;
 
         if (newCol == currentCol) { //straight line progression
@@ -51,9 +57,17 @@ class Pawn extends Piece {
 
             gameBoard[currentRow][currentCol] = null;
 
-            //en passant check & handling.
-            checkEnPassant(gameBoard, newRow, newCol);
 
+            //en passant check & handling.
+            int passPts = checkEnPassant(gameBoard, newRow, newCol);
+
+            if (passPts > 0) {
+                if (COLOR == Color.WHITE) {
+                    points[0] += passPts;
+                } else {
+                    points[1] += passPts;
+                }
+            }
 
             //convert to queen at enemy home row.
             //NB player can technically convert pawn to ANY piece, but the queen is the most powerful so why
@@ -88,6 +102,13 @@ class Pawn extends Piece {
                 if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
 
                     gameBoard[newRow][newCol].captured = true;
+
+                    if (COLOR == Color.WHITE) {
+                        points[0] += gameBoard[newRow][newCol].VALUE;
+                    } else {
+                        points[1] += gameBoard[newRow][newCol].VALUE;
+                    }
+
                     gameBoard[currentRow][currentCol] = null;
 
                     //convert to queen if enemy home row
@@ -115,9 +136,11 @@ class Pawn extends Piece {
         return false;
     }
 
-    private void checkEnPassant(Piece[][] gameBoard, int newRow, int newCol) {
+    private int checkEnPassant(Piece[][] gameBoard, int newRow, int newCol) {
         boolean enemyOnLeft = false;
         boolean enemyOnRight = false;
+
+        int enemyValue = 0;
 
         if ((newCol - 1) >= 0 &&
                 gameBoard[newRow][newCol - 1] != null &&
@@ -131,56 +154,59 @@ class Pawn extends Piece {
             enemyOnRight = true;
         }
 
+        if (!enemyOnLeft && !enemyOnRight) { return 0; }
+
         //en passant enemy on both sides, choose highest value enemy, else prompt if same.
         if (enemyOnLeft && enemyOnRight) {
 
             Piece leftEnemy = gameBoard[newRow][newCol - 1];
             Piece rightEnemy = gameBoard[newRow][newCol + 1];
 
-            if (leftEnemy.VALUE > rightEnemy.VALUE) {
-                leftEnemy.captured = true;
-                gameBoard[newRow][newCol - 1] = null;
-            } else if (rightEnemy.VALUE > leftEnemy.VALUE) {
-                rightEnemy.captured = true;
-                gameBoard[newRow][newCol + 1] = null;
-            } else {
+            char choice = 'l';
+
+            if (rightEnemy.VALUE > leftEnemy.VALUE) {
+                choice = 'r';
+            } else if (rightEnemy.VALUE == leftEnemy.VALUE) {
                 System.out.print("en passant. capture left or right? (l/r): ");
+
                 Scanner sc = new Scanner(System.in);
                 String captureChoice = sc.next();
 
                 if (captureChoice.length() > 0) {
+                    choice = captureChoice.toLowerCase().charAt(0);
 
-                    char choice = captureChoice.toLowerCase().charAt(0);
-
-                    if (choice == 'l') {
-                        leftEnemy.captured = true;
-                        gameBoard[newRow][newCol - 1] = null;
-                    } else if (choice == 'r') {
-                        rightEnemy.captured = true;
-                        gameBoard[newRow][newCol + 1] = null;
-                    } else {
-                        if (Math.random() < 0.5) {
-                            leftEnemy.captured = true;
-                            gameBoard[newRow][newCol - 1] = null;
-                        } else {
-                            rightEnemy.captured = true;
-                            gameBoard[newRow][newCol + 1] = null;
-                        }
+                    if (choice != 'l' && choice != 'r') {
+                        choice =  Math.random() < 0.5 ? 'l' : 'r';
                     }
                 }
             }
+
+            if (choice == 'l') {
+                leftEnemy.captured = true;
+                enemyValue = leftEnemy.VALUE;
+                gameBoard[newRow][newCol - 1] = null;
+            } else {
+                rightEnemy.captured = true;
+                enemyValue = rightEnemy.VALUE;
+                gameBoard[newRow][newCol + 1] = null;
+            }
+            return enemyValue;
         }
 
-        //en passant - enemy on one side only.
-        if (enemyOnLeft & !enemyOnRight) {
+        //en passant - enemy on left side only.
+        if (enemyOnLeft) {
             gameBoard[newRow][newCol - 1].captured = true;
+            enemyValue = gameBoard[newRow][newCol].VALUE;
             gameBoard[newRow][newCol - 1] = null;
+            return enemyValue;
         }
 
-        if (enemyOnRight & !enemyOnLeft) {
-            gameBoard[newRow][newCol + 1].captured = true;
-            gameBoard[newRow][newCol + 1] = null;
-        }
+        //right side only.
+        gameBoard[newRow][newCol + 1].captured = true;
+        enemyValue = gameBoard[newRow][newCol].VALUE;
+        gameBoard[newRow][newCol + 1] = null;
+
+        return enemyValue;
 
     }
 
@@ -194,5 +220,8 @@ class Pawn extends Piece {
     int getPointsValue() {
         return 1;
     }
+
+    @Override
+    String getIcon() { return COLOR == Color.BLACK ? "♟︎" : "♙"; }
 
 }

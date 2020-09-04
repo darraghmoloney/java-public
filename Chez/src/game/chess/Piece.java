@@ -12,7 +12,7 @@ abstract class Piece {
 
     final Color COLOR;
     final Color ENEMY_COLOR;
-    //    final String icon;
+    final String ICON;
     final String NAME;
     final String SHORT_NAME;
     final int VALUE;
@@ -22,10 +22,7 @@ abstract class Piece {
     int timesMoved = 0;
     boolean captured = false;
 
-    //TODO: record moves made using standard notation.
-//    final static ArrayList<String> moveList = new ArrayList<>();
 
-    static boolean checkmated;
 
     Piece(Color color, String name) {
 
@@ -33,6 +30,7 @@ abstract class Piece {
         this.NAME = name;
         this.SHORT_NAME = getShortName();
         this.VALUE = getPointsValue();
+        this.ICON = getIcon();
         this.ENEMY_COLOR = (color == Color.WHITE) ? Color.BLACK : Color.WHITE;
 
     }
@@ -50,15 +48,49 @@ abstract class Piece {
     }
 
 
-    abstract boolean move(Piece[][] gameBoard, int newRow, int newCol);
+    abstract boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points);
 
     protected static boolean outOfBounds(int rowOrCol) {
         return rowOrCol < 0 || rowOrCol >= 8;
     }
 
-    abstract String getShortName();
+    boolean checkClearPath(Piece[][] gameBoard, int newRow, int newCol) {
 
+        int rowChange = Math.abs(currentRow - newRow);
+        int colChange = Math.abs(currentCol - newCol);
+
+        int moves = Math.max(rowChange, colChange); //works if one is 0, or both same (diagonal)
+
+        int rowParity = 0; //change on each iteration. rowDeltaT might be a better name ?
+        int colParity = 0;
+
+        if (rowChange > 0) {
+            rowParity = currentRow < newRow ? 1 : -1;
+        }
+
+        if (colChange > 0) {
+            colParity = currentCol < newCol ? 1 : -1;
+        }
+
+        int checkRow = currentRow + rowParity;
+        int checkCol = currentCol + colParity;
+
+        for (int i = 0; i < (moves - 1); ++i) { //check to square just before final spot.
+            if (gameBoard[checkRow][checkCol] != null) { //blocked.
+                System.out.println("can't move - blocked");
+                return false;
+            }
+            checkRow += rowParity;
+            checkCol += colParity;
+
+        }
+
+        return true;
+    }
+
+    abstract String getShortName();
     abstract int getPointsValue();
+    abstract String getIcon();
 
     @Override
     public String toString() {

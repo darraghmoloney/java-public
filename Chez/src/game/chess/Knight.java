@@ -12,7 +12,10 @@ class Knight extends Piece {
 
 
     @Override
-    boolean move(Piece[][] gameBoard, int newRow, int newCol) {
+    boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
+
+        int newRow = rowAndCol[0];
+        int newCol = rowAndCol[1];
 
         if (Piece.outOfBounds(newRow) || Piece.outOfBounds(newCol)) {
             System.out.println("out of bounds");
@@ -35,6 +38,10 @@ class Knight extends Piece {
             return false;
         }
 
+        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == this.COLOR) {
+            return false;
+        }
+
         //NB knights can jump over other pieces, so blocking checks are not required.
         //free space move
         if (gameBoard[newRow][newCol] == null) {
@@ -54,6 +61,14 @@ class Knight extends Piece {
         if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
             System.out.println("attacking");
             gameBoard[currentRow][currentCol].captured = true;
+
+            if (COLOR == Color.WHITE) {
+                points[0] += gameBoard[newRow][newCol].VALUE;
+            } else {
+                points[1] += gameBoard[newRow][newCol].VALUE;
+            }
+
+
             gameBoard[currentRow][currentCol] = null;
 
             currentRow = newRow;
@@ -76,4 +91,7 @@ class Knight extends Piece {
     int getPointsValue() {
         return 3;
     }
+
+    @Override
+    String getIcon() { return COLOR == Color.BLACK ? "♞" : "♘"; }
 }
