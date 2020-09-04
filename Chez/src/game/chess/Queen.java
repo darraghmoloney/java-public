@@ -2,9 +2,6 @@ package game.chess;
 
 class Queen extends Piece {
 
-    Queen(Color color) {
-        super(color, "Queen");
-    }
 
     Queen(Color color, int row, int col) {
         super(color, "Queen", row, col);
@@ -30,7 +27,7 @@ class Queen extends Piece {
             }
         }
 
-        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == this.COLOR) {
+        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == this.COLOR) { //same color piece in that spot
             return false;
         }
 
@@ -38,19 +35,8 @@ class Queen extends Piece {
             return false;
         }
 
-        //final spot check.
-        if (gameBoard[newRow][newCol] == null) {
-            gameBoard[currentRow][currentCol] = null;
-            currentRow = newRow;
-            currentCol = newCol;
-            gameBoard[currentRow][currentCol] = this;
-
-            ++timesMoved;
-            return true;
-        }
-
         //attacking
-        if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
+        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
 
             gameBoard[newRow][newCol].captured = true;
 
@@ -60,18 +46,17 @@ class Queen extends Piece {
                 points[1] += gameBoard[newRow][newCol].VALUE;
             }
 
-            gameBoard[currentRow][currentCol] = null;
-            currentRow = newRow;
-            currentCol = newCol;
-            gameBoard[currentRow][currentCol] = this;
-
-            ++timesMoved;
-            return true;
-
         }
 
+        //update board
+        gameBoard[currentRow][currentCol] = null;
+        currentRow = newRow;
+        currentCol = newCol;
+        gameBoard[currentRow][currentCol] = this;
 
-        return false; //if path is unblocked but own piece occupies that spot, etc.
+        ++timesMoved;
+        return true;
+
     }
 
     @Override
@@ -85,5 +70,7 @@ class Queen extends Piece {
     }
 
     @Override
-    String getIcon() { return COLOR == Color.BLACK ? "♛" : "♕"; }
+    String getIcon() {
+        return COLOR == Color.BLACK ? "♛" : "♕";
+    }
 }

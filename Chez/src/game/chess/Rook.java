@@ -4,9 +4,6 @@ import java.util.Scanner;
 
 class Rook extends Piece {
 
-    Rook(Color color) {
-        super(color, "Rook");
-    }
 
     Rook(Color color, int row, int col) {
         super(color, "Rook", row, col);
@@ -44,53 +41,7 @@ class Rook extends Piece {
             return true;
         }
 
-
-//            if ((currentCol == 0 && newCol == 2 || currentCol == 7 && newCol == 5) &&
-//                    gameBoard[currentRow][4] != null &&
-//                    gameBoard[currentRow][4] instanceof King
-//            ) {
-//
-//                Piece kingPiece = gameBoard[currentRow][4];
-//
-//                if (kingPiece.COLOR != ENEMY_COLOR &&
-//                        (COLOR == Color.WHITE && currentRow == 7 ||
-//                                COLOR == Color.BLACK && currentRow == 0)) {
-//
-//                    if (timesMoved == 0 && kingPiece.timesMoved == 0) {
-//
-//                        System.out.print("do you want to castle? (y/n): ");
-//
-//                        Scanner sc = new Scanner(System.in);
-//                        String castleInput = sc.next();
-//
-//                        if (castleInput.length() > 0 && castleInput.toLowerCase().charAt(0) == 'y') {
-//
-//                            int colParity = currentCol < newCol ? 1 : -1;
-//
-//                            //move rook.
-//                            gameBoard[currentRow][currentCol] = null;
-//                            currentCol = newCol;
-//                            gameBoard[currentRow][currentCol] = this;
-//
-//                            //move king.
-//                            gameBoard[currentRow][4] = null;
-//                            kingPiece.currentCol = newCol - colParity;
-//                            gameBoard[currentRow][kingPiece.currentCol] = kingPiece;
-//
-//                            ++timesMoved;
-//                            ++kingPiece.timesMoved;
-//                            return true;
-//
-//                        }
-//                    }
-//                }
-//            }
-
-//        }
-
-
-
-
+        //attacking
         if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
 
             gameBoard[newRow][newCol].captured = true;
@@ -103,6 +54,7 @@ class Rook extends Piece {
 
         }
 
+        //update board
         gameBoard[currentRow][currentCol] = null;
         currentRow = newRow;
         currentCol = newCol;
@@ -123,7 +75,7 @@ class Rook extends Piece {
             Piece kingPiece = gameBoard[currentRow][4];
 
             if (kingPiece.COLOR != ENEMY_COLOR &&
-                    (COLOR == Color.WHITE && currentRow == 7 ||COLOR == Color.BLACK && currentRow == 0)) {
+                    (COLOR == Color.WHITE && currentRow == 7 || COLOR == Color.BLACK && currentRow == 0)) {
 
                 if (timesMoved == 0 && kingPiece.timesMoved == 0) {
 

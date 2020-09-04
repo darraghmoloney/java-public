@@ -2,9 +2,6 @@ package game.chess;
 
 class Bishop extends Piece {
 
-    Bishop(Color color) {
-        super(color, "Bishop");
-    }
 
     Bishop(Color color, int row, int col) {
         super(color, "Bishop", row, col);
@@ -43,20 +40,9 @@ class Bishop extends Piece {
             return false;
         }
 
-        //check final spot.
-        if (gameBoard[newRow][newCol] == null) {
-            gameBoard[currentRow][currentCol] = null;
-            currentRow = newRow;
-            currentCol  = newCol;
-            gameBoard[currentRow][currentCol] = this;
-
-            ++timesMoved;
-            return true;
-        }
-
         //attacking
-        if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
-            System.out.println("attacking");
+        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
+
             gameBoard[newRow][newCol].captured = true;
 
             if (COLOR == Color.WHITE) {
@@ -65,17 +51,17 @@ class Bishop extends Piece {
                 points[1] += gameBoard[newRow][newCol].VALUE;
             }
 
-            gameBoard[currentRow][currentCol] = null;
-            currentRow = newRow;
-            currentCol = newCol;
-            gameBoard[currentRow][currentCol] = this;
-
-            ++timesMoved;
-            return true;
-
         }
 
-        return false;
+        //update board
+        gameBoard[currentRow][currentCol] = null;
+        currentRow = newRow;
+        currentCol = newCol;
+        gameBoard[currentRow][currentCol] = this;
+
+        ++timesMoved;
+        return true;
+
     }
 
     @Override
@@ -89,5 +75,7 @@ class Bishop extends Piece {
     }
 
     @Override
-    String getIcon() { return COLOR == Color.BLACK ? "♝" : "♗"; }
+    String getIcon() {
+        return COLOR == Color.BLACK ? "♝" : "♗";
+    }
 }

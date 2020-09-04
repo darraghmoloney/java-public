@@ -1,6 +1,7 @@
 package game.chess;
 
-import java.util.ArrayList;
+//import java.util.ArrayList;
+
 import java.util.Scanner;
 
 public class Chez {
@@ -9,7 +10,7 @@ public class Chez {
     boolean checkmated;
 
     //TODO: record moves made using standard notation.
-    static ArrayList<String> moveList = new ArrayList<>();
+//    static ArrayList<String> moveList = new ArrayList<>();
     int[] points = new int[2];
 
     public Chez() {
@@ -174,7 +175,7 @@ public class Chez {
         }
 
         if (kingsCount < 2) {
-            checkmated = true; //confirm gameover if king was captured en passant, etc. (very unlikely, but...)
+            checkmated = true; //confirm game over if king was captured en passant, etc. (very unlikely, but...)
         }
 
     }

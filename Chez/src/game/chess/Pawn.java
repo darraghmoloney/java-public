@@ -7,10 +7,6 @@ class Pawn extends Piece {
     final static int WHITE_HOME_ROW = 7;
     final static int BLACK_HOME_ROW = 0;
 
-    Pawn(Color color) {
-        super(color, "Pawn");
-    }
-
     Pawn(Color color, int row, int col) {
         super(color, "Pawn", row, col);
     }
@@ -48,7 +44,6 @@ class Pawn extends Piece {
         int enemyHomeIndex = COLOR == Color.WHITE ? BLACK_HOME_ROW : WHITE_HOME_ROW;
 
         if (newCol == currentCol) { //straight line progression
-
 
             if (gameBoard[newRow][newCol] != null) {
                 System.out.println("can't move pawn - blocked");
@@ -154,7 +149,9 @@ class Pawn extends Piece {
             enemyOnRight = true;
         }
 
-        if (!enemyOnLeft && !enemyOnRight) { return 0; }
+        if (!enemyOnLeft && !enemyOnRight) {
+            return 0;
+        }
 
         //en passant enemy on both sides, choose highest value enemy, else prompt if same.
         if (enemyOnLeft && enemyOnRight) {
@@ -176,7 +173,7 @@ class Pawn extends Piece {
                     choice = captureChoice.toLowerCase().charAt(0);
 
                     if (choice != 'l' && choice != 'r') {
-                        choice =  Math.random() < 0.5 ? 'l' : 'r';
+                        choice = Math.random() < 0.5 ? 'l' : 'r';
                     }
                 }
             }
@@ -222,6 +219,8 @@ class Pawn extends Piece {
     }
 
     @Override
-    String getIcon() { return COLOR == Color.BLACK ? "♟︎" : "♙"; }
+    String getIcon() {
+        return COLOR == Color.BLACK ? "♟︎" : "♙";
+    }
 
 }

@@ -1,7 +1,5 @@
 package game.chess;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 
 enum Color {
     WHITE,
@@ -23,7 +21,6 @@ abstract class Piece {
     boolean captured = false;
 
 
-
     Piece(Color color, String name) {
 
         this.COLOR = color;
@@ -39,6 +36,7 @@ abstract class Piece {
         this(color, name);
         place(row, col);
     }
+
 
     public void place(int row, int col) {
         if (!outOfBounds(row) && !(outOfBounds(col))) {
@@ -89,7 +87,9 @@ abstract class Piece {
     }
 
     abstract String getShortName();
+
     abstract int getPointsValue();
+
     abstract String getIcon();
 
     @Override

@@ -2,8 +2,10 @@ package game.chess;
 
 class King extends Piece {
 
-    King(Color color) { super(color, "King"); }
-    King(Color color, int row, int col) {super(color, "King", row, col); }
+
+    King(Color color, int row, int col) {
+        super(color, "King", row, col);
+    }
 
     @Override
     boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
@@ -28,17 +30,9 @@ class King extends Piece {
             return false;
         }
 
-        if (gameBoard[newRow][newCol] == null) {
-            gameBoard[currentRow][currentCol] = null;
-            currentRow = newRow;
-            currentCol = newCol;
-            gameBoard[currentRow][currentCol] = this;
+        //attacking
+        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
 
-            ++timesMoved;
-            return true;
-        }
-
-        if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
             gameBoard[newRow][newCol].captured = true;
 
             if (COLOR == Color.WHITE) {
@@ -46,18 +40,16 @@ class King extends Piece {
             } else {
                 points[1] += gameBoard[newRow][newCol].VALUE;
             }
-
-            gameBoard[currentRow][currentCol] = null;
-            currentRow = newRow;
-            currentCol = newCol;
-            gameBoard[currentRow][currentCol] = this;
-
-            ++timesMoved;
-            return true;
         }
 
+        //update board
+        gameBoard[currentRow][currentCol] = null;
+        currentRow = newRow;
+        currentCol = newCol;
+        gameBoard[currentRow][currentCol] = this;
 
-        return false;
+        ++timesMoved;
+        return true;
     }
 
     @Override
@@ -71,5 +63,7 @@ class King extends Piece {
     }
 
     @Override
-    String getIcon() { return COLOR == Color.BLACK ? "♚" : "♔";  }
+    String getIcon() {
+        return COLOR == Color.BLACK ? "♚" : "♔";
+    }
 }

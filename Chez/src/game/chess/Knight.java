@@ -2,9 +2,6 @@ package game.chess;
 
 class Knight extends Piece {
 
-    Knight(Color color) {
-        super(color, "Knight");
-    }
 
     Knight(Color color, int row, int col) {
         super(color, "Knight", row, col);
@@ -43,23 +40,10 @@ class Knight extends Piece {
         }
 
         //NB knights can jump over other pieces, so blocking checks are not required.
-        //free space move
-        if (gameBoard[newRow][newCol] == null) {
-
-            gameBoard[currentRow][currentCol] = null;
-
-            currentRow = newRow;
-            currentCol = newCol;
-            gameBoard[currentRow][currentCol] = this;
-
-            ++timesMoved;
-            return true;
-        }
-
 
         //attacking move
-        if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
-            System.out.println("attacking");
+        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
+
             gameBoard[currentRow][currentCol].captured = true;
 
             if (COLOR == Color.WHITE) {
@@ -68,18 +52,18 @@ class Knight extends Piece {
                 points[1] += gameBoard[newRow][newCol].VALUE;
             }
 
-
-            gameBoard[currentRow][currentCol] = null;
-
-            currentRow = newRow;
-            currentCol = newCol;
-            gameBoard[currentRow][currentCol] = this;
-
-            ++timesMoved;
-            return true;
         }
 
-        return false;
+        //update board
+        gameBoard[currentRow][currentCol] = null;
+
+        currentRow = newRow;
+        currentCol = newCol;
+        gameBoard[currentRow][currentCol] = this;
+
+        ++timesMoved;
+        return true;
+
     }
 
     @Override
@@ -93,5 +77,7 @@ class Knight extends Piece {
     }
 
     @Override
-    String getIcon() { return COLOR == Color.BLACK ? "♞" : "♘"; }
+    String getIcon() {
+        return COLOR == Color.BLACK ? "♞" : "♘";
+    }
 }
