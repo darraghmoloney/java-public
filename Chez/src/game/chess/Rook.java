@@ -4,6 +4,8 @@ import java.util.Scanner;
 
 class Rook extends Piece {
 
+    boolean performedCastle;
+    boolean queenSideCastle;
 
     Rook(Color color, int row, int col) {
         super(color, "Rook", row, col);
@@ -12,6 +14,9 @@ class Rook extends Piece {
 
     @Override
     boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
+
+        performedCastle = false;
+        queenSideCastle = false;
 
         int newRow = rowAndCol[0];
         int newCol = rowAndCol[1];
@@ -31,13 +36,14 @@ class Rook extends Piece {
             return false;
         }
 
-        if (!checkClearPath(gameBoard, newRow, newCol)) {
+        if (checkBlockedPath(gameBoard, newRow, newCol)) {
             return false;
         }
 
 
         //castling check
         if (currentCol - newCol != 0 && checkCastling(gameBoard, newCol)) {
+            performedCastle = true;
             return true;
         }
 
@@ -88,6 +94,8 @@ class Rook extends Piece {
 
                         int colParity = currentCol < newCol ? 1 : -1;
 
+                        if (currentCol == 0) queenSideCastle = true; //for notation.
+
                         //move rook.
                         gameBoard[currentRow][currentCol] = null;
                         currentCol = newCol;
@@ -97,6 +105,15 @@ class Rook extends Piece {
                         gameBoard[currentRow][4] = null;
                         kingPiece.currentCol = newCol - colParity;
                         gameBoard[currentRow][kingPiece.currentCol] = kingPiece;
+
+                        //update location of king for checking if in check.
+                        if (COLOR == Color.BLACK) {
+                            King.bKingLoc[0] = kingPiece.currentRow;
+                            King.bKingLoc[1] = kingPiece.currentCol;
+                        } else {
+                            King.wKingLoc[0] = kingPiece.currentRow;
+                            King.wKingLoc[1] = kingPiece.currentCol;
+                        }
 
                         ++timesMoved;
                         ++kingPiece.timesMoved;

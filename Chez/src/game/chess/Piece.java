@@ -52,7 +52,7 @@ abstract class Piece {
         return rowOrCol < 0 || rowOrCol >= 8;
     }
 
-    boolean checkClearPath(Piece[][] gameBoard, int newRow, int newCol) {
+    boolean checkBlockedPath(Piece[][] gameBoard, int newRow, int newCol) {
 
         int rowChange = Math.abs(currentRow - newRow);
         int colChange = Math.abs(currentCol - newCol);
@@ -76,14 +76,36 @@ abstract class Piece {
         for (int i = 0; i < (moves - 1); ++i) { //check to square just before final spot.
             if (gameBoard[checkRow][checkCol] != null) { //blocked.
                 System.out.println("can't move - blocked");
-                return false;
+                return true;
             }
             checkRow += rowParity;
             checkCol += colParity;
 
         }
 
-        return true;
+        return false;
+    }
+
+    protected Piece findNearestPiece(Piece[][] gameBoard, int[] rowAndCol, int rChange, int cChange) {
+
+        int row = rowAndCol[0] + rChange;
+        int col = rowAndCol[1] + cChange;
+
+        Piece nearest = null;
+
+        while (!Piece.outOfBounds(row) && !Piece.outOfBounds(col)) {
+
+            if (gameBoard[row][col] != null) {
+                nearest = gameBoard[row][col];
+                break;
+            }
+
+            row = row + rChange;
+            col = col + cChange;
+
+        }
+
+        return nearest;
     }
 
     abstract String getShortName();
