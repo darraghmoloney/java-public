@@ -31,7 +31,7 @@ class Queen extends Piece {
             return false;
         }
 
-        if (!checkClearPath(gameBoard, newRow, newCol)) {
+        if (checkBlockedPath(gameBoard, newRow, newCol)) {
             return false;
         }
 
