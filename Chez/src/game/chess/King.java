@@ -64,110 +64,112 @@ class King extends Piece {
 
     boolean isInCheck(Piece[][] gameBoard) {
 
-        //  0   [1]   2   [3]   4
-        //  [5]   6   7   8   [9]
-        //  10  11  -12-  13  14
-        //  [15]  16  17  18  [19]
-        //  20  [21]  22  [23]  24
+        return isSquareUnderAttack(gameBoard, currentRow, currentCol, ENEMY_COLOR);
 
-
-        //knight check needs special treatment as knights can jump
-        int[][] validKnightSquares = {
-                { currentRow - 2, currentCol - 1 },
-                { currentRow - 2, currentCol + 1 },
-                { currentRow - 1, currentCol - 2},
-                { currentRow - 1, currentCol + 2},
-
-                { currentRow + 2, currentCol - 1 },
-                { currentRow + 2, currentCol + 1 },
-                { currentRow + 1, currentCol - 2},
-                { currentRow + 1, currentCol + 2},
-        };
-
-        for (int[] knightRowCol : validKnightSquares) {
-
-            int kRow = knightRowCol[0];
-            int kCol = knightRowCol[1];
-
-            if (kRow < 0 || kCol < 0 || kRow > 7 || kCol > 7) {
-                continue;
-            }
-
-            Piece checkPiece = gameBoard[kRow][kCol];
-
-            if (checkPiece != null && checkPiece.COLOR == ENEMY_COLOR && checkPiece instanceof Knight) {
-                return true;
-            }
-
-        }
-
-        int[] rowAndCol = { currentRow, currentCol };
-        int pieceIndex = 0;
-        int pawnIndexOffset = COLOR == Color.BLACK ? 6 : 0; //as pawns can only attack forward, only need to check one side
-
-
-        //check all surrounds until piece found or bounds reached.
-        //this loop checks directly around square 0,0.
-        //      c-1 c0 c1
-        //r-1:  -1  0   1
-        //r0:   -1  0   1
-        //r1:   -1  0   1
-        for (int rChange = -1; rChange < 2; ++rChange) {
-
-            for (int cChange = -1; cChange < 2; ++cChange) {
-                ++pieceIndex;
-
-                if (rChange == 0 && cChange == 0) {
-                    continue; //self
-                }
-
-                int[] checkRowCol = { rowAndCol[0], rowAndCol[1] } ;
-                Piece nextNearPiece = findNearestPiece(gameBoard, checkRowCol, rChange, cChange);
-
-                if (nextNearPiece != null && nextNearPiece.COLOR == this.ENEMY_COLOR) {
-
-                    //queen attacks in any direction, any number of squares
-                    if (nextNearPiece instanceof Queen) {
-                        return true;
-                    }
-
-                    //bishop - diagonal, unlimited
-                    if (pieceIndex % 2 == 1) {
-                        if (nextNearPiece instanceof Bishop) {
-                            return true;
-                        }
-                    }
-
-                    //rook - straight, unlimited
-                    if (pieceIndex % 2 == 0) {
-                        if (nextNearPiece instanceof Rook) {
-                            return true;
-                        }
-                    }
-
-                    //king check. single square in any direction.
-                    if (nextNearPiece instanceof King) {
-                        if ( Math.abs(nextNearPiece.currentRow - this.currentRow) <= 1 && //max 1 col, 1 row away to attack
-                                Math.abs(nextNearPiece.currentCol - this.currentCol) <= 1) {
-                            return true;
-                        }
-                    }
-
-                    //pawn check. attacks one square forward on left or right side.
-                    if (pieceIndex == pawnIndexOffset || pieceIndex == 2 + pawnIndexOffset) {
-                        if (nextNearPiece instanceof Pawn) {
-                            return true;
-                        }
-                    }
-
-                }
-            }
-        }
-
-
-
-
-        return false;
+//        //  0   [1]   2   [3]   4
+//        //  [5]   6   7   8   [9]
+//        //  10  11  -12-  13  14
+//        //  [15]  16  17  18  [19]
+//        //  20  [21]  22  [23]  24
+//
+//
+//        //knight check needs special treatment as knights can jump
+//        int[][] validKnightSquares = {
+//                { currentRow - 2, currentCol - 1 },
+//                { currentRow - 2, currentCol + 1 },
+//                { currentRow - 1, currentCol - 2},
+//                { currentRow - 1, currentCol + 2},
+//
+//                { currentRow + 2, currentCol - 1 },
+//                { currentRow + 2, currentCol + 1 },
+//                { currentRow + 1, currentCol - 2},
+//                { currentRow + 1, currentCol + 2},
+//        };
+//
+//        for (int[] knightRowCol : validKnightSquares) {
+//
+//            int kRow = knightRowCol[0];
+//            int kCol = knightRowCol[1];
+//
+//            if (kRow < 0 || kCol < 0 || kRow > 7 || kCol > 7) {
+//                continue;
+//            }
+//
+//            Piece checkPiece = gameBoard[kRow][kCol];
+//
+//            if (checkPiece != null && checkPiece.COLOR == ENEMY_COLOR && checkPiece instanceof Knight) {
+//                return true;
+//            }
+//
+//        }
+//
+//        int[] rowAndCol = { currentRow, currentCol };
+//        int pieceIndex = 0;
+//        int pawnIndexOffset = COLOR == Color.BLACK ? 6 : 0; //as pawns can only attack forward, only need to check one side
+//
+//
+//        //check all surrounds until piece found or bounds reached.
+//        //this loop checks directly around square 0,0.
+//        //      c-1 c0 c1
+//        //r-1:  -1  0   1
+//        //r0:   -1  0   1
+//        //r1:   -1  0   1
+//        for (int rChange = -1; rChange < 2; ++rChange) {
+//
+//            for (int cChange = -1; cChange < 2; ++cChange) {
+//                ++pieceIndex;
+//
+//                if (rChange == 0 && cChange == 0) {
+//                    continue; //self
+//                }
+//
+//                int[] checkRowCol = { rowAndCol[0], rowAndCol[1] } ;
+//                Piece nextNearPiece = findNearestPiece(gameBoard, checkRowCol, rChange, cChange);
+//
+//                if (nextNearPiece != null && nextNearPiece.COLOR == this.ENEMY_COLOR) {
+//
+//                    //queen attacks in any direction, any number of squares
+//                    if (nextNearPiece instanceof Queen) {
+//                        return true;
+//                    }
+//
+//                    //bishop - diagonal, unlimited
+//                    if (pieceIndex % 2 == 1) {
+//                        if (nextNearPiece instanceof Bishop) {
+//                            return true;
+//                        }
+//                    }
+//
+//                    //rook - straight, unlimited
+//                    if (pieceIndex % 2 == 0) {
+//                        if (nextNearPiece instanceof Rook) {
+//                            return true;
+//                        }
+//                    }
+//
+//                    //king check. single square in any direction.
+//                    if (nextNearPiece instanceof King) {
+//                        if ( Math.abs(nextNearPiece.currentRow - this.currentRow) <= 1 && //max 1 col, 1 row away to attack
+//                                Math.abs(nextNearPiece.currentCol - this.currentCol) <= 1) {
+//                            return true;
+//                        }
+//                    }
+//
+//                    //pawn check. attacks one square forward on left or right side.
+//                    if (pieceIndex == pawnIndexOffset || pieceIndex == 2 + pawnIndexOffset) {
+//                        if (nextNearPiece instanceof Pawn) {
+//                            return true;
+//                        }
+//                    }
+//
+//                }
+//            }
+//        }
+//
+//
+//
+//
+//        return false;
     }
 
 

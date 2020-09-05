@@ -8,6 +8,7 @@ class Pawn extends Piece {
     final static int BLACK_HOME_ROW = 0;
 
     boolean enPassantCapture; //for game record notation
+    boolean promoted;
 
     Pawn(Color color, int row, int col) {
         super(color, "Pawn", row, col);
@@ -21,6 +22,7 @@ class Pawn extends Piece {
         int newCol = rowAndCol[1];
 
         enPassantCapture = false;
+        promoted = false;
 
         if (Piece.outOfBounds(newRow) || Piece.outOfBounds(newCol)) {
             return false;
@@ -61,10 +63,7 @@ class Pawn extends Piece {
             //NB player can technically convert pawn to ANY piece, but the queen is the most powerful so why
             //would anyone choose a different one?
             if (newRow == enemyHomeIndex) {
-                Piece newQueen = new Queen(this.COLOR, newRow, newCol);
-                gameBoard[newRow][newCol] = newQueen;
-
-                newQueen.timesMoved = timesMoved;
+                promotePawn(gameBoard, newRow, newCol);
                 return true;
             }
 
@@ -118,10 +117,7 @@ class Pawn extends Piece {
 
             //convert to queen if enemy home row
             if (newRow == enemyHomeIndex) {
-                Piece newQueen = new Queen(this.COLOR, newRow, newCol);
-                gameBoard[newRow][newCol] = newQueen;
-
-                newQueen.timesMoved = timesMoved;
+                promotePawn(gameBoard, newRow, newCol);
                 return true;
             }
 
@@ -136,6 +132,40 @@ class Pawn extends Piece {
         }
 
         return false;
+    }
+
+    private void promotePawn(Piece[][] gameBoard, int newRow, int newCol) {
+        promoted = true;
+
+        System.out.print("promotion. choose [Q]ueen, k[N]ight, [R]ook, or [B]ishop: ");
+
+        Scanner sc = new Scanner(System.in);
+        String choiceStr = sc.next();
+        String choice = "Q";
+
+        if (choiceStr.length() > 0) {
+            choice = choiceStr.toUpperCase().substring(0, 1);
+        }
+
+        Piece newPiece;
+
+        switch (choice) {
+            case "N":
+                newPiece = new Knight(this.COLOR, newRow, newCol);
+                break;
+            case "R":
+                newPiece = new Rook(this.COLOR, newRow, newCol);
+                break;
+            case "B":
+                newPiece = new Bishop(this.COLOR, newRow, newCol);
+                break;
+            default:
+                newPiece = new Queen(this.COLOR, newRow, newCol);
+        }
+
+        gameBoard[newRow][newCol] = newPiece;
+
+        newPiece.timesMoved = timesMoved;
     }
 
 

@@ -24,7 +24,6 @@ public class Chez {
             gameBoard[1][square] = new Pawn(Color.BLACK, 1, square);
             gameBoard[6][square] = new Pawn(Color.WHITE, 6, square);
         }
-        
 
         //rooks
         gameBoard[0][0] = new Rook(Color.BLACK, 0, 0);
@@ -78,7 +77,8 @@ public class Chez {
 
             System.out.println();
 
-            System.out.print("[" + points[0] + ":" + points[1] + "] enter move (e.g. 'a2 a3'), q to quit: ");
+            //TODO: add surrendering.
+            System.out.print("[" + points[0] + ":" + points[1] + "] enter move for " + currentPlayerColor + " (e.g. 'a2 a3'), q to quit: ");
 
             Scanner sc = new Scanner(System.in);
             String pieceStr = sc.next();
@@ -123,7 +123,7 @@ public class Chez {
             if (!Piece.outOfBounds(pieceRow) && !Piece.outOfBounds(pieceCol)) {
 
                 if (gameBoard[pieceRow][pieceCol] == null) {
-                    System.out.println("no piece found at " + pieceRow + "," + pieceCol);
+                    System.out.println("no piece found at " + pieceStr);
                     continue;
                 }
 
@@ -166,6 +166,10 @@ public class Chez {
                     thisMoveStr =  rowChar + "x" + moveStr + "e.p.";
                 }
 
+                if (chosenPiece instanceof Pawn && ((Pawn) chosenPiece).promoted) {
+                    thisMoveStr += gameBoard[moveRow][moveCol].SHORT_NAME;
+                }
+
 
                 if (chosenPiece instanceof Rook && ((Rook)chosenPiece).performedCastle) {
                     thisMoveStr = "0-0";
@@ -187,12 +191,18 @@ public class Chez {
 
                     if (wKing.isInCheck(gameBoard)) {
                         System.out.println("check for w. king");
-                        thisMoveStr += "+";
+
+                        if (currentPlayerColor == Color.BLACK) {
+                            thisMoveStr += "+";
+                        }
                     }
 
                     if (bKing.isInCheck(gameBoard)) {
                         System.out.println("check for b. king");
-                        thisMoveStr += "+";
+
+                        if (currentPlayerColor == Color.WHITE) {
+                            thisMoveStr += "+";
+                        }
                     }
                 }
 
@@ -210,10 +220,8 @@ public class Chez {
 
     private void showBoard() {
 
-        String blackSquare = " ";
-//        blackSquare = "■";
-        String whiteSquare = "-";
-//        whiteSquare = "□";
+        String blackSquare = "_";
+        String whiteSquare = " ";
 
         System.out.print("   ");
 

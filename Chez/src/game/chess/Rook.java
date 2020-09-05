@@ -71,6 +71,8 @@ class Rook extends Piece {
 
     }
 
+    //castling is TECHNICALLY a King move
+    //TODO: implement castling in King class as well
     private boolean checkCastling(Piece[][] gameBoard, int newCol) {
 
         if ((currentCol == 0 && newCol == 3 || currentCol == 7 && newCol == 5) &&
@@ -78,12 +80,27 @@ class Rook extends Piece {
                 gameBoard[currentRow][4] instanceof King
         ) {
 
-            Piece kingPiece = gameBoard[currentRow][4];
+            King kingPiece = (King) gameBoard[currentRow][4];
 
             if (kingPiece.COLOR != ENEMY_COLOR &&
-                    (COLOR == Color.WHITE && currentRow == 7 || COLOR == Color.BLACK && currentRow == 0)) {
+                    (COLOR == Color.WHITE && currentRow == 7 ||
+                            COLOR == Color.BLACK && currentRow == 0)) {
 
-                if (timesMoved == 0 && kingPiece.timesMoved == 0) {
+                boolean castlingPossible = timesMoved == 0 && kingPiece.timesMoved == 0 && !kingPiece.isInCheck(gameBoard);
+                int colParity = currentCol < newCol ? 1 : -1; //direction change step (back or forward)
+
+                //castling not allowed if square to cross is under attack
+                if (isSquareUnderAttack(gameBoard, currentRow, currentCol + colParity, ENEMY_COLOR)) {
+                    castlingPossible = false;
+                }
+
+                //castling not allowed if final king square is under attack.
+                //king lands on OPPOSITE side of rook (jumping over it)
+                if (isSquareUnderAttack(gameBoard, currentRow, newCol - colParity, ENEMY_COLOR)) {
+                    castlingPossible = false;
+                }
+
+                if (castlingPossible) {
 
                     System.out.print("do you want to castle? (y/n): ");
 
@@ -91,8 +108,6 @@ class Rook extends Piece {
                     String castleInput = sc.next();
 
                     if (castleInput.length() > 0 && castleInput.toLowerCase().charAt(0) == 'y') {
-
-                        int colParity = currentCol < newCol ? 1 : -1;
 
                         if (currentCol == 0) queenSideCastle = true; //for notation.
 
