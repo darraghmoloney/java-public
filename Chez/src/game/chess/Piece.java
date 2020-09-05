@@ -161,7 +161,7 @@ abstract class Piece {
             return true;
         }
 
-        if (rightPossPawn != null && rightPossPawn.COLOR == otherTeamColor && leftPossPawn instanceof Pawn) {
+        if (rightPossPawn != null && rightPossPawn.COLOR == otherTeamColor && rightPossPawn instanceof Pawn) {
             return true;
         }
 
