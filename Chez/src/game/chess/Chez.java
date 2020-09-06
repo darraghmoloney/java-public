@@ -63,27 +63,17 @@ public class Chez {
         while (!gameOver && !checkmated) {
 
 
-            int moveListCount = 0;
-
-            for (String s : moveList) {
-                if (moveListCount % 2 == 0) {
-                    System.out.print((moveListCount / 2 + 1) + ". ");
-                }
-                System.out.print(s + " ");
-                if (moveListCount % 2 == 1) {
-                    System.out.print("  ");
-                }
-                ++moveListCount;
-            }
-
-            System.out.println();
+            printMovesList();
 
             //TODO: add surrendering.
+
+            //TODO: (maybe) only allow moves that remove check condition if king in check (requires surrender or automatic checkmate if not possible)
+
             System.out.print("[" + points[0] + ":" + points[1] + "] ");
 
             Scanner sc = new Scanner(System.in);
 
-            System.out.print("enter a move for " + currentPlayerColor + "(e.g. e4, Nh6, Qb3...), or q to quit: ");
+            System.out.print("enter a move for " + currentPlayerColor + " (e.g. e4, Nh6, Qb3...), or q to quit: ");
             String moveStr = sc.next();
 
             if (moveStr.length() > 0 && moveStr.charAt(0) == 'q') {
@@ -96,9 +86,6 @@ public class Chez {
                 System.out.println("no valid piece found to make that move");
                 continue;
             }
-
-            System.out.println(chosenPiece + " " + chosenPiece.getAlphanumericLoc());
-
 
             String rowColStr = moveStr;
             if (moveStr.length() > 2) rowColStr = rowColStr.substring(1);
@@ -117,7 +104,7 @@ public class Chez {
             System.out.println();
 
             boolean attackingKing = false;
-            String moveNotation = "";
+            String moveNotation;
 
             if (!Piece.outOfBounds(moveRow) && !Piece.outOfBounds(moveCol)) {
                 if (gameBoard[moveRow][moveCol] instanceof King) {
@@ -178,10 +165,15 @@ public class Chez {
                 }
 
                 if (attackingKing) { //valid attack on king -> checkmate.
+                    moveNotation += "#";
                     System.out.println("checkmate");
                     System.out.println(currentPlayerColor + " wins");
-                    moveNotation += "#";
                     gameOver = true;
+
+                    moveList.add(moveNotation);
+
+                    showBoard();
+                    printMovesList();
                 } else {
 
                     King wKing = (King) gameBoard[wKingLoc[0]][wKingLoc[1]];
@@ -210,7 +202,9 @@ public class Chez {
 
             }
 
-            showBoard();
+            if (!gameOver) {
+                showBoard();
+            }
 
         }
 
@@ -261,8 +255,10 @@ public class Chez {
                 }
 
             }
-            System.out.println();
+            System.out.println(" |");
         }
+
+        System.out.println("  --------------------------");
 
 
         if (kingsCount < 2) {
@@ -328,23 +324,23 @@ public class Chez {
             //attacking check.
             if (gameBoard[destRow][destCol] != null && gameBoard[destRow][destCol].COLOR != playerColor) {
 
-                if (!Piece.outOfBounds(destCol - 1) &&
-                        gameBoard[prevPawnRow][destCol - 1] != null &&
-                        gameBoard[prevPawnRow][destCol - 1].COLOR == playerColor &&
-                        gameBoard[prevPawnRow][destCol - 1] instanceof Pawn
-                ) {
+                if (!Piece.outOfBounds(destCol - 1)) {
 
-                    pieceChoices.add(gameBoard[prevPawnRow][destCol - 1]);
+                    Piece leftPiece = gameBoard[prevPawnRow][destCol - 1];
+
+                    if (leftPiece != null && leftPiece.COLOR == playerColor && leftPiece instanceof Pawn) {
+                        pieceChoices.add(leftPiece);
+                    }
 
                 }
 
-                if (!Piece.outOfBounds(destCol + 1) &&
-                        gameBoard[prevPawnRow][destCol + 1] != null &&
-                        gameBoard[prevPawnRow][destCol + 1].COLOR == playerColor &&
-                        gameBoard[prevPawnRow][destCol + 1] instanceof Pawn
-                ) {
+                if (!Piece.outOfBounds(destCol + 1)) {
 
-                    pieceChoices.add(gameBoard[prevPawnRow][destCol + 1]);
+                    Piece rightPiece = gameBoard[prevPawnRow][destCol + 1];
+
+                    if (rightPiece != null && rightPiece.COLOR == playerColor && rightPiece instanceof Pawn) {
+                        pieceChoices.add(rightPiece);
+                    }
 
                 }
 
@@ -528,6 +524,23 @@ public class Chez {
         }
 
         return pieceChoices.get(chosenNumber - 1);
+    }
+
+    private void printMovesList() {
+        int moveListCount = 0;
+
+        for (String s : moveList) {
+            if (moveListCount % 2 == 0) {
+                System.out.print((moveListCount / 2 + 1) + ". ");
+            }
+            System.out.print(s + " ");
+            if (moveListCount % 2 == 1) {
+                System.out.print("  ");
+            }
+            ++moveListCount;
+        }
+
+        System.out.println();
     }
 
 
