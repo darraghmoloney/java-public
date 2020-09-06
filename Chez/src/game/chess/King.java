@@ -2,12 +2,12 @@ package game.chess;
 
 class King extends Piece {
 
-    static int[] bKingLoc = {0, 4};
-    static int[] wKingLoc = {7, 4};
+    boolean inCheck;
 
     King(Color color, int row, int col) {
         super(color, "King", row, col);
     }
+
 
     @Override
     boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
@@ -50,26 +50,14 @@ class King extends Piece {
         currentCol = newCol;
         gameBoard[currentRow][currentCol] = this;
 
-        if (COLOR == Color.BLACK) {
-            bKingLoc[0] = currentRow;
-            bKingLoc[1] = currentCol;
-        } else {
-            wKingLoc[0] = currentRow;
-            wKingLoc[1] = currentCol;
-        }
-
         ++timesMoved;
         return true;
     }
 
     boolean isInCheck(Piece[][] gameBoard) {
-
-        return isSquareUnderAttack(gameBoard, currentRow, currentCol, ENEMY_COLOR);
-
+        inCheck = isSquareUnderAttack(gameBoard, currentRow, currentCol, ENEMY_COLOR);
+        return inCheck;
     }
-
-
-
 
     @Override
     String getShortName() {

@@ -1,7 +1,6 @@
 package game.chess;
 
 import java.util.ArrayList;
-
 import java.util.Scanner;
 
 public class Chez {
@@ -11,9 +10,11 @@ public class Chez {
     int moveCount = 1;
     Color currentPlayerColor = Color.WHITE;
 
-    //TODO: record moves made using standard notation.
-    ArrayList<String> moveList = new ArrayList<>();
+    ArrayList<String> moveList = new ArrayList<>(); //moves record
     int[] points = new int[2];
+
+    int[] bKingLoc = {0, 4}; //store king locations to easily verify if king is in check or not
+    int[] wKingLoc = {7, 4};
 
     public Chez() {
 
@@ -78,65 +79,45 @@ public class Chez {
             System.out.println();
 
             //TODO: add surrendering.
-            System.out.print("[" + points[0] + ":" + points[1] + "] enter move for " + currentPlayerColor + " (e.g. 'a2 a3'), q to quit: ");
+            System.out.print("[" + points[0] + ":" + points[1] + "] ");
 
             Scanner sc = new Scanner(System.in);
-            String pieceStr = sc.next();
-            char rowChar = pieceStr.charAt(0);
 
-            if (rowChar == 'q') {
+            System.out.print("enter a move for " + currentPlayerColor + "(e.g. e4, Nh6, Qb3...), or q to quit: ");
+            String moveStr = sc.next();
+
+            if (moveStr.length() > 0 && moveStr.charAt(0) == 'q') {
                 break;
             }
 
-            if ((int) rowChar < 'a' || (int) rowChar > 'h') continue;
-            if (pieceStr.length() < 2) continue;
+            Piece chosenPiece = findPieceToMove(moveStr, currentPlayerColor);
 
-            int pieceCol = rowChar - 'a';
-            int pieceRow;
-
-            try {
-                pieceRow = 8 - Integer.parseInt(pieceStr.substring(1, 2)); //invert numbers as chess grid is displayed upside-down
-            } catch (NumberFormatException nfe) {
+            if (chosenPiece == null) {
+                System.out.println("no valid piece found to make that move");
                 continue;
             }
 
-            String moveStr = sc.next();
-            char moveChar = moveStr.charAt(0);
+            System.out.println(chosenPiece + " " + chosenPiece.getAlphanumericLoc());
 
-            if ((int) moveChar < 'a' || (int) moveChar > 'h') continue;
-            if (moveStr.length() < 2) continue;
 
-            int moveCol = moveChar - 'a';
-            int moveRow;
+            String rowColStr = moveStr;
+            if (moveStr.length() > 2) rowColStr = rowColStr.substring(1);
 
-            try {
-                moveRow = 8 - Integer.parseInt(moveStr.substring(1, 2));
-            } catch (NumberFormatException nfe) {
+            Integer[] moveRowCol = convertAlphanumericToRowCol(rowColStr);
+
+            if (moveRowCol == null) {
+                System.out.println("couldn't find that row and column");
                 continue;
             }
+
+            int moveRow = moveRowCol[0];
+            int moveCol = moveRowCol[1];
+            int[] moveRowAndCol = {moveRow, moveCol};
 
             System.out.println();
 
             boolean attackingKing = false;
-            String thisMoveStr = "";
-
-            if (!Piece.outOfBounds(pieceRow) && !Piece.outOfBounds(pieceCol)) {
-
-                if (gameBoard[pieceRow][pieceCol] == null) {
-                    System.out.println("no piece found at " + pieceStr);
-                    continue;
-                }
-
-                if (gameBoard[pieceRow][pieceCol].COLOR != currentPlayerColor) {
-                    System.out.println("choose piece to move for " + currentPlayerColor);
-                    continue;
-                }
-
-                if (!(gameBoard[pieceRow][pieceCol] instanceof Pawn)) {
-                    thisMoveStr += gameBoard[pieceRow][pieceCol].SHORT_NAME + "";
-                }
-
-            }
+            String moveNotation = "";
 
             if (!Piece.outOfBounds(moveRow) && !Piece.outOfBounds(moveCol)) {
                 if (gameBoard[moveRow][moveCol] instanceof King) {
@@ -144,69 +125,86 @@ public class Chez {
                 }
             }
 
-            int[] moveRowAndCol = {moveRow, moveCol};
-            boolean attackAttempt = gameBoard[moveRow][moveCol] != null;
+            String pieceStr = chosenPiece.getAlphanumericLoc();
 
-            Piece chosenPiece = gameBoard[pieceRow][pieceCol];
+            boolean wKingWasInCheck = ((King) gameBoard[ wKingLoc[0] ][ wKingLoc[1] ]).inCheck;
+            boolean bKingWasInCheck = ((King) gameBoard[ bKingLoc[0] ][ bKingLoc[1] ]).inCheck;
+
+            boolean attackAttempt = gameBoard[moveRow][moveCol] != null;
             boolean validMove = chosenPiece.move(gameBoard, moveRowAndCol, points);
+
+            //after successful move, king will be there
+            boolean kingMoved = gameBoard[moveRow][moveCol] instanceof King;
 
             if (validMove) {
 
                 ++moveCount;
 
-                if (attackAttempt) {
-                    if (chosenPiece instanceof Pawn) {
-                        thisMoveStr += rowChar;
-                    }
-                    thisMoveStr += "x";
-                }
-                thisMoveStr += moveStr;
+                if (kingMoved) {
 
-                if (chosenPiece instanceof Pawn && ((Pawn)chosenPiece).enPassantCapture) {
-                    thisMoveStr =  rowChar + "x" + moveStr + "e.p.";
+                    int[] newKingLoc = {chosenPiece.currentRow, chosenPiece.currentCol};
+
+                    if (currentPlayerColor == Color.WHITE) {
+                        wKingLoc = newKingLoc;
+                    } else {
+                        bKingLoc = newKingLoc;
+                    }
+                }
+
+                moveNotation = moveStr;
+
+                if (attackAttempt || chosenPiece instanceof Pawn && ((Pawn) chosenPiece).enPassantCapture) {
+                    if (chosenPiece instanceof Pawn) {
+                        moveNotation = pieceStr.charAt(0) + "x" + moveStr;
+
+                        if (((Pawn) chosenPiece).enPassantCapture) {
+                            moveNotation += "e.p.";
+                        }
+
+                    } else{
+                        moveNotation = moveStr.charAt(0) + "x" + moveStr.substring(1);
+                    }
                 }
 
                 if (chosenPiece instanceof Pawn && ((Pawn) chosenPiece).promoted) {
-                    thisMoveStr += gameBoard[moveRow][moveCol].SHORT_NAME;
+                    moveNotation += gameBoard[moveRow][moveCol].SHORT_NAME;
                 }
 
-
-                if (chosenPiece instanceof Rook && ((Rook)chosenPiece).performedCastle) {
-                    thisMoveStr = "0-0";
-                    if (((Rook)chosenPiece).queenSideCastle) {
-                        thisMoveStr += "-0";
+                if (chosenPiece instanceof Rook && ((Rook) chosenPiece).performedCastle) {
+                    moveNotation = "0-0";
+                    if (((Rook) chosenPiece).queenSideCastle) {
+                        moveNotation += "-0";
                     }
                 }
-
 
                 if (attackingKing) { //valid attack on king -> checkmate.
                     System.out.println("checkmate");
                     System.out.println(currentPlayerColor + " wins");
-                    thisMoveStr += "#";
+                    moveNotation += "#";
                     gameOver = true;
                 } else {
 
-                    King wKing = (King) gameBoard[King.wKingLoc[0]][King.wKingLoc[1]];
-                    King bKing = (King) gameBoard[King.bKingLoc[0]][King.bKingLoc[1]];
+                    King wKing = (King) gameBoard[wKingLoc[0]][wKingLoc[1]];
+                    King bKing = (King) gameBoard[bKingLoc[0]][bKingLoc[1]];
 
                     if (wKing.isInCheck(gameBoard)) {
                         System.out.println("check for w. king");
 
-                        if (currentPlayerColor == Color.BLACK) {
-                            thisMoveStr += "+";
+                        if (!wKingWasInCheck && currentPlayerColor == Color.BLACK) {
+                            moveNotation += "+";
                         }
                     }
 
                     if (bKing.isInCheck(gameBoard)) {
                         System.out.println("check for b. king");
 
-                        if (currentPlayerColor == Color.WHITE) {
-                            thisMoveStr += "+";
+                        if (!bKingWasInCheck && currentPlayerColor == Color.WHITE) {
+                            moveNotation += "+";
                         }
                     }
                 }
 
-                moveList.add(thisMoveStr);
+                moveList.add(moveNotation);
 
                 currentPlayerColor = currentPlayerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
 
@@ -252,6 +250,13 @@ public class Chez {
                 System.out.print(" " + square.ICON + " ");
 
                 if (square instanceof King) {
+                    if (square.COLOR == Color.WHITE) {
+                        wKingLoc[0] = row; //check & update in case of king movement e.g. castling, etc.
+                        wKingLoc[1] = col;
+                    } else {
+                        bKingLoc[0] = row;
+                        bKingLoc[1] = col;
+                    }
                     ++kingsCount;
                 }
 
@@ -265,5 +270,265 @@ public class Chez {
         }
 
     }
+
+    //change co-ordinates String like "e4" to correct array row & col numbering.
+    private static Integer[] convertAlphanumericToRowCol(String alphaStr) {
+
+        char rowChar = alphaStr.charAt(0);
+
+        //error cases
+        if (rowChar < 'a' || rowChar > 'h') return null;
+        if (alphaStr.length() < 2) return null;
+
+        Integer[] rowCol = new Integer[2];
+        int col = rowChar - 'a';
+        int row;
+
+        try {
+            row = 8 - Integer.parseInt(alphaStr.substring(1, 2)); //invert numbers as chess grid is displayed upside-down
+            rowCol[0] = row;
+            rowCol[1] = col;
+        } catch (NumberFormatException nfe) {
+            System.out.println("invalid row number");
+            return null;
+        }
+
+        return rowCol;
+    }
+
+    private Piece findPieceToMove(String movementStr, Color playerColor) {
+
+        //movementStr is like e5 or Nc3 or Qf7 etc.
+        char pieceShortName;
+        String alphanumericStr;
+
+        if (movementStr.length() == 3) { //non-pawn moves note the type of piece to be moved.
+            pieceShortName = movementStr.charAt(0);
+            alphanumericStr = movementStr.substring(1);
+        } else {
+            pieceShortName = 'P';
+            alphanumericStr = movementStr;
+        }
+
+        Integer[] rowAndCol = convertAlphanumericToRowCol(alphanumericStr);
+
+        if (rowAndCol == null || rowAndCol[0] == null || rowAndCol[1] == null) return null;
+
+        int destRow = rowAndCol[0];
+        int destCol = rowAndCol[1];
+
+        ArrayList<Piece> pieceChoices = new ArrayList<>();
+
+        //PAWN - 1 or 2 rows behind if normal move, 1 row & 1 col behind if attacking
+        if (pieceShortName == 'P') {
+
+            int pawnRowOffset = playerColor == Color.BLACK ? -1 : 1;
+            int prevPawnRow = destRow + pawnRowOffset;
+
+            //attacking check.
+            if (gameBoard[destRow][destCol] != null && gameBoard[destRow][destCol].COLOR != playerColor) {
+
+                if (!Piece.outOfBounds(destCol - 1) &&
+                        gameBoard[prevPawnRow][destCol - 1] != null &&
+                        gameBoard[prevPawnRow][destCol - 1].COLOR == playerColor &&
+                        gameBoard[prevPawnRow][destCol - 1] instanceof Pawn
+                ) {
+
+                    pieceChoices.add(gameBoard[prevPawnRow][destCol - 1]);
+
+                }
+
+                if (!Piece.outOfBounds(destCol + 1) &&
+                        gameBoard[prevPawnRow][destCol + 1] != null &&
+                        gameBoard[prevPawnRow][destCol + 1].COLOR == playerColor &&
+                        gameBoard[prevPawnRow][destCol + 1] instanceof Pawn
+                ) {
+
+                    pieceChoices.add(gameBoard[prevPawnRow][destCol + 1]);
+
+                }
+
+            }
+
+            Piece epPiece = gameBoard[destRow + pawnRowOffset][destCol];
+
+            //attacking en passant.
+            if (gameBoard[destRow][destCol] == null && epPiece instanceof Pawn && epPiece.COLOR != playerColor) {
+
+                if (destCol - 1 >= 0) {
+                    Piece leftPiece = gameBoard[prevPawnRow][destCol - 1];
+
+                    if (leftPiece != null && leftPiece.COLOR == playerColor && leftPiece instanceof Pawn) {
+
+                        pieceChoices.add(leftPiece);
+                        ((Pawn) leftPiece).enPassantCapture = true;
+
+                    }
+
+                }
+
+                if (destCol + 1 < 8) {
+                    Piece rightPiece = gameBoard[prevPawnRow][destCol + 1];
+
+                    if (rightPiece != null && rightPiece.COLOR == playerColor && rightPiece instanceof Pawn) {
+
+                        pieceChoices.add(rightPiece);
+                        ((Pawn) rightPiece).enPassantCapture = true;
+
+                    }
+
+                }
+
+            }
+
+
+            //regular straight line movement
+            if (gameBoard[destRow][destCol] == null) {
+
+                if (gameBoard[prevPawnRow][destCol] instanceof Pawn && gameBoard[prevPawnRow][destCol].COLOR == playerColor) {
+                    pieceChoices.add(gameBoard[prevPawnRow][destCol]);
+
+                } else if (destRow == 3 && playerColor == Color.BLACK || destRow == 4 && playerColor == Color.WHITE) {
+                    //checking for 2-square move (permitted on first pawn move only)
+                    prevPawnRow += pawnRowOffset;
+
+                    if (gameBoard[prevPawnRow][destCol] instanceof Pawn && gameBoard[prevPawnRow][destCol].COLOR == playerColor) {
+                        pieceChoices.add(gameBoard[prevPawnRow][destCol]);
+                    }
+                }
+            }
+        }
+
+        //KING - adjacent squares in any direction
+        if (pieceShortName == 'K') {
+
+            for (int rowNum = destRow - 1; rowNum < destRow + 2; ++rowNum) {
+                for (int colNum = destCol - 1; colNum < destCol + 2; ++colNum) {
+
+                    if (Piece.outOfBounds(rowNum) || Piece.outOfBounds(colNum)) {
+                        continue;
+                    }
+
+                    if (rowNum == 0 && colNum == 0) continue;
+
+                    Piece nextPiece = gameBoard[rowNum][colNum];
+
+                    if (nextPiece instanceof King && nextPiece.COLOR == playerColor) {
+                        pieceChoices.add(gameBoard[rowNum][colNum]);
+                    }
+                }
+            }
+
+        }
+
+        //KNIGHT - specific squares with a row / col difference of 3
+        if (pieceShortName == 'N') {
+
+            int[][] validKnightMoveSquares = {
+                    {destRow - 2, destCol - 1},
+                    {destRow - 2, destCol + 1},
+                    {destRow - 1, destCol - 2},
+                    {destRow - 1, destCol + 2},
+
+                    {destRow + 2, destCol - 1},
+                    {destRow + 2, destCol + 1},
+                    {destRow + 1, destCol - 2},
+                    {destRow + 1, destCol + 2},
+            };
+
+            for (int[] rowCol : validKnightMoveSquares) {
+
+                int nRow = rowCol[0];
+                int nCol = rowCol[1];
+
+                if (Piece.outOfBounds(nRow) || Piece.outOfBounds(nCol)) {
+                    continue;
+                }
+
+                Piece nextPiece = gameBoard[nRow][nCol];
+
+                if (nextPiece instanceof Knight && nextPiece.COLOR == playerColor) {
+                    pieceChoices.add(gameBoard[nRow][nCol]);
+                }
+
+            }
+
+        }
+
+        //BISHOP, ROOK, QUEEN - check surrounding squares.
+        if (pieceShortName == 'B' || pieceShortName == 'R' || pieceShortName == 'Q') {
+
+            int[] rCol = new int[2];
+            rCol[0] = rowAndCol[0];
+            rCol[1] = rowAndCol[1];
+
+            //get nearest piece in all directions.
+            for (int rowChange = -1; rowChange < 2; ++rowChange) {
+                for (int colChange = -1; colChange < 2; ++colChange) {
+
+                    if (rowChange == 0 && colChange == 0) continue;
+
+                    Piece nextNearestPiece = Piece.findNearestPiece(gameBoard, rCol, rowChange, colChange);
+
+                    if (nextNearestPiece != null && nextNearestPiece.COLOR != currentPlayerColor) continue;
+
+                    //queen -all
+                    if (pieceShortName == 'Q' && nextNearestPiece instanceof Queen) {
+                        pieceChoices.add(nextNearestPiece);
+                    }
+
+                    //rook -straight lines
+                    if (pieceShortName == 'R' && (rowChange == 0 || colChange == 0)) {
+
+                        if (nextNearestPiece instanceof Rook) {
+                            pieceChoices.add(nextNearestPiece);
+                        }
+
+                    }
+
+                    //bishop -diagonals.
+                    if (pieceShortName == 'B' && rowChange != 0 && colChange != 0) {
+
+                        if (nextNearestPiece instanceof Bishop) {
+                            pieceChoices.add(nextNearestPiece);
+                        }
+
+                    }
+                }
+
+            }
+        }
+
+
+        if (pieceChoices.size() == 0) {
+            return null;
+        }
+
+        if (pieceChoices.size() == 1) {
+            return pieceChoices.get(0);
+        }
+
+        System.out.println("choose piece to move: ");
+
+        for (int i = 0; i < pieceChoices.size(); ++i) {
+            Piece p = pieceChoices.get(i);
+            System.out.print("[" + (i + 1) + "] " + p.getAlphanumericLoc() + ", ");
+        }
+
+        Scanner sc = new Scanner(System.in);
+        String input = sc.next();
+        int chosenNumber = 1;
+
+        if (input.length() != 0) {
+            try {
+                chosenNumber = Integer.parseInt(input);
+            } catch (NumberFormatException nfe) {
+                System.out.println("invalid input - setting choice to 1");
+            }
+        }
+
+        return pieceChoices.get(chosenNumber - 1);
+    }
+
 
 }

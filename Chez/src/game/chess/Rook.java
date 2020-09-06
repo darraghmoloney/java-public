@@ -121,15 +121,6 @@ class Rook extends Piece {
                         kingPiece.currentCol = newCol - colParity;
                         gameBoard[currentRow][kingPiece.currentCol] = kingPiece;
 
-                        //update location of king for checking if in check.
-                        if (COLOR == Color.BLACK) {
-                            King.bKingLoc[0] = kingPiece.currentRow;
-                            King.bKingLoc[1] = kingPiece.currentCol;
-                        } else {
-                            King.wKingLoc[0] = kingPiece.currentRow;
-                            King.wKingLoc[1] = kingPiece.currentCol;
-                        }
-
                         ++timesMoved;
                         ++kingPiece.timesMoved;
                         return true;

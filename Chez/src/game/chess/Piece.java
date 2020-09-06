@@ -119,7 +119,7 @@ abstract class Piece {
 
 
         //knight check needs special treatment as knights can jump
-        int[][] validKnightSquares = {
+        int[][] validKnightMoveSquares = {
                 { checkRow - 2, checkCol - 1 },
                 { checkRow - 2, checkCol + 1 },
                 { checkRow - 1, checkCol - 2},
@@ -131,7 +131,7 @@ abstract class Piece {
                 { checkRow + 1, checkCol + 2},
         };
 
-        for (int[] knightRowCol : validKnightSquares) {
+        for (int[] knightRowCol : validKnightMoveSquares) {
 
             int nRow = knightRowCol[0];
             int nCol = knightRowCol[1];
@@ -225,6 +225,10 @@ abstract class Piece {
     abstract int getPointsValue();
 
     abstract String getIcon();
+
+    public String getAlphanumericLoc() {
+        return (char) (currentCol + 'a') + "" + (8 - currentRow);
+    }
 
     @Override
     public String toString() {
