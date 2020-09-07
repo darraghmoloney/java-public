@@ -59,9 +59,7 @@ class Pawn extends Piece {
             gameBoard[currentRow][currentCol] = null;
 
 
-            //convert to queen at enemy home row.
-            //NB player can technically convert pawn to ANY piece, but the queen is the most powerful so why
-            //would anyone choose a different one?
+            //promote at enemy home row.
             if (newRow == enemyHomeIndex) {
                 promotePawn(gameBoard, newRow, newCol);
                 return true;
@@ -78,6 +76,7 @@ class Pawn extends Piece {
         //attacking to board left / right.
         if (newCol == currentCol - 1 || newCol == currentCol + 1) {
 
+
             Piece attackedPiece = null;
 
             if (this.COLOR == Color.WHITE && newRow != currentRow - 1 ||
@@ -86,6 +85,7 @@ class Pawn extends Piece {
             }
 
             if (gameBoard[newRow][newCol] == null) {
+
                 //en passant.
                 if (gameBoard[currentRow][newCol] != null &&
                         gameBoard[currentRow][newCol] instanceof Pawn &&
