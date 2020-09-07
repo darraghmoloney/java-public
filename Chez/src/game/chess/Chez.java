@@ -66,14 +66,13 @@ public class Chez {
             printMovesList();
 
             //TODO: add surrendering.
-
             //TODO: (maybe) only allow moves that remove check condition if king in check (requires surrender or automatic checkmate if not possible)
 
             System.out.print("[" + points[0] + ":" + points[1] + "] ");
 
             Scanner sc = new Scanner(System.in);
 
-            System.out.print("enter a move for " + currentPlayerColor + " (e.g. e4, Nh6, Qb3...), or q to quit: ");
+            System.out.print("enter a move for " + currentPlayerColor + " (e.g. e4, Nh6, 0-0...), or q to quit: ");
             String moveStr = sc.next();
 
             if (moveStr.length() > 0 && moveStr.charAt(0) == 'q') {
@@ -81,6 +80,25 @@ public class Chez {
             }
 
             Piece chosenPiece = findPieceToMove(moveStr, currentPlayerColor);
+
+            //handle king-side castling.
+            if (moveStr.equals("0-0")) {
+                if (currentPlayerColor == Color.BLACK) {
+                    moveStr = "Kg8";
+                } else {
+                    moveStr = "Kg1";
+                }
+            }
+
+            //handle queen-side castling.
+            if (moveStr.equals("0-0-0")) {
+
+                if (currentPlayerColor == Color.BLACK) {
+                    moveStr = "Kc8";
+                } else {
+                    moveStr = "Kc1";
+                }
+            }
 
             if (chosenPiece == null) {
                 System.out.println("no valid piece found to make that move");
@@ -91,6 +109,7 @@ public class Chez {
             if (moveStr.length() > 2) rowColStr = rowColStr.substring(1);
 
             Integer[] moveRowCol = convertAlphanumericToRowCol(rowColStr);
+
 
             if (moveRowCol == null) {
                 System.out.println("couldn't find that row and column");
@@ -157,9 +176,9 @@ public class Chez {
                     moveNotation += gameBoard[moveRow][moveCol].SHORT_NAME;
                 }
 
-                if (chosenPiece instanceof Rook && ((Rook) chosenPiece).performedCastle) {
+                if (chosenPiece instanceof King && ((King) chosenPiece).performedCastle) {
                     moveNotation = "0-0";
-                    if (((Rook) chosenPiece).queenSideCastle) {
+                    if (((King) chosenPiece).queenSideCastle) {
                         moveNotation += "-0";
                     }
                 }
@@ -178,6 +197,12 @@ public class Chez {
 
                     King wKing = (King) gameBoard[wKingLoc[0]][wKingLoc[1]];
                     King bKing = (King) gameBoard[bKingLoc[0]][bKingLoc[1]];
+
+                    if (wKing == null || bKing == null) {
+                        updateKingPositions();
+                        wKing = (King) gameBoard[wKingLoc[0]][wKingLoc[1]];
+                        bKing = (King) gameBoard[bKingLoc[0]][bKingLoc[1]];
+                    }
 
                     if (wKing.isInCheck(gameBoard)) {
                         System.out.println("check for w. king");
@@ -298,6 +323,23 @@ public class Chez {
         char pieceShortName;
         String alphanumericStr;
 
+        //special handling for castling.
+        if (movementStr.equals("0-0") || movementStr.equals("0-0-0")) {
+
+            int homeRow = 0;
+            if (playerColor == Color.WHITE) {
+                homeRow = 7;
+            }
+
+            if (gameBoard[homeRow][4] instanceof King) {
+                return gameBoard[homeRow][4];
+            } else {
+                return null;
+            }
+
+        }
+
+
         if (movementStr.length() == 3) { //non-pawn moves note the type of piece to be moved.
             pieceShortName = movementStr.charAt(0);
             alphanumericStr = movementStr.substring(1);
@@ -355,11 +397,8 @@ public class Chez {
                     Piece leftPiece = gameBoard[prevPawnRow][destCol - 1];
 
                     if (leftPiece != null && leftPiece.COLOR == playerColor && leftPiece instanceof Pawn) {
-
                         pieceChoices.add(leftPiece);
-                        ((Pawn) leftPiece).enPassantCapture = true;
-
-                    }
+                  }
 
                 }
 
@@ -367,10 +406,7 @@ public class Chez {
                     Piece rightPiece = gameBoard[prevPawnRow][destCol + 1];
 
                     if (rightPiece != null && rightPiece.COLOR == playerColor && rightPiece instanceof Pawn) {
-
                         pieceChoices.add(rightPiece);
-                        ((Pawn) rightPiece).enPassantCapture = true;
-
                     }
 
                 }
@@ -395,7 +431,7 @@ public class Chez {
             }
         }
 
-        //KING - adjacent squares in any direction
+        //KING - adjacent (one move only) squares in any direction
         if (pieceShortName == 'K') {
 
             for (int rowNum = destRow - 1; rowNum < destRow + 2; ++rowNum) {
@@ -451,44 +487,40 @@ public class Chez {
 
         }
 
-        //BISHOP, ROOK, QUEEN - check surrounding squares.
+        //BISHOP, ROOK, QUEEN - check surrounding squares to max possible extent if necessary.
         if (pieceShortName == 'B' || pieceShortName == 'R' || pieceShortName == 'Q') {
-
-            int[] rCol = new int[2];
-            rCol[0] = rowAndCol[0];
-            rCol[1] = rowAndCol[1];
 
             //get nearest piece in all directions.
             for (int rowChange = -1; rowChange < 2; ++rowChange) {
                 for (int colChange = -1; colChange < 2; ++colChange) {
 
-                    if (rowChange == 0 && colChange == 0) continue;
+                    if (rowChange == 0 && colChange == 0) continue; //skip the location to move to
 
-                    Piece nextNearestPiece = Piece.findNearestPiece(gameBoard, rCol, rowChange, colChange);
+                    //skip diagonals for rook, skip straight lines for bishop
+                    if (pieceShortName == 'R' && !(rowChange == 0 || colChange == 0)) continue;
+                    if (pieceShortName == 'B' && (rowChange == 0 || colChange == 0)) continue;
+
+                    Piece nextNearestPiece = Piece.findNearestPiece(gameBoard, rowAndCol, rowChange, colChange);
 
                     if (nextNearestPiece != null && nextNearestPiece.COLOR != currentPlayerColor) continue;
 
-                    //queen -all
+                    //queen -all directions possible
                     if (pieceShortName == 'Q' && nextNearestPiece instanceof Queen) {
                         pieceChoices.add(nextNearestPiece);
                     }
 
-                    //rook -straight lines
-                    if (pieceShortName == 'R' && (rowChange == 0 || colChange == 0)) {
-
+                    //rook -straight lines - checked above
+                    if (pieceShortName == 'R') {
                         if (nextNearestPiece instanceof Rook) {
                             pieceChoices.add(nextNearestPiece);
                         }
-
                     }
 
-                    //bishop -diagonals.
-                    if (pieceShortName == 'B' && rowChange != 0 && colChange != 0) {
-
+                    //bishop -diagonals - checked above
+                    if (pieceShortName == 'B') {
                         if (nextNearestPiece instanceof Bishop) {
                             pieceChoices.add(nextNearestPiece);
                         }
-
                     }
                 }
 
@@ -541,6 +573,28 @@ public class Chez {
         }
 
         System.out.println();
+    }
+
+    private void updateKingPositions() {
+
+        for (Piece[] row : gameBoard) {
+            for (Piece piece : row) {
+
+                if (piece instanceof King) {
+
+                    if (piece.COLOR == Color.BLACK) {
+                        bKingLoc[0] = piece.currentRow;
+                        bKingLoc[1] = piece.currentCol;
+                    } else {
+                        wKingLoc[0] = piece.currentRow;;
+                        wKingLoc[1] = piece.currentCol;
+                    }
+
+                }
+
+            }
+        }
+
     }
 
 

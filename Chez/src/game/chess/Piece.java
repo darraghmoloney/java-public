@@ -52,7 +52,7 @@ abstract class Piece {
         return rowOrCol < 0 || rowOrCol >= 8;
     }
 
-    boolean checkBlockedPath(Piece[][] gameBoard, int newRow, int newCol) {
+    boolean isBlockedPath(Piece[][] gameBoard, int newRow, int newCol) {
 
         int rowChange = Math.abs(currentRow - newRow);
         int colChange = Math.abs(currentCol - newCol);
@@ -86,7 +86,7 @@ abstract class Piece {
         return false;
     }
 
-    protected static Piece findNearestPiece(Piece[][] gameBoard, int[] rowAndCol, int rChange, int cChange) {
+    protected static Piece findNearestPiece(Piece[][] gameBoard, Integer[] rowAndCol, int rChange, int cChange) {
 
         int row = rowAndCol[0] + rChange;
         int col = rowAndCol[1] + cChange;
@@ -181,7 +181,7 @@ abstract class Piece {
                     continue; //self
                 }
 
-                int[] checkRowCol = { rowAndCol[0], rowAndCol[1] } ;
+                Integer[] checkRowCol = { rowAndCol[0], rowAndCol[1] } ;
                 Piece nextNearPiece = findNearestPiece(gameBoard, checkRowCol, rChange, cChange);
 
                 if (nextNearPiece != null && nextNearPiece.COLOR == otherTeamColor) {

@@ -36,7 +36,7 @@ class Bishop extends Piece {
             return false;
         }
 
-        if (checkBlockedPath(gameBoard, newRow, newCol)) {
+        if (isBlockedPath(gameBoard, newRow, newCol)) {
             return false;
         }
 
