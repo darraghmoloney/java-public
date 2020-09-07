@@ -86,12 +86,17 @@ class Pawn extends Piece {
 
             if (gameBoard[newRow][newCol] == null) {
 
-                //en passant.
-                if (gameBoard[currentRow][newCol] != null &&
-                        gameBoard[currentRow][newCol] instanceof Pawn &&
-                        gameBoard[currentRow][newCol].COLOR == ENEMY_COLOR) {
+                //en passant. capture a Pawn if it just moved 2 squares forward from its home row.
+                if (gameBoard[currentRow][newCol] instanceof Pawn && gameBoard[currentRow][newCol].COLOR == ENEMY_COLOR) {
+
+                    int epCaptureRow = COLOR == Color.BLACK ? 5 : 2; //i.e. the row in front of the pawn's starting row.
+                    if (newRow != epCaptureRow) return false;
 
                     attackedPiece = gameBoard[currentRow][newCol];
+
+                    if (attackedPiece.timesMoved > 1) return false;
+
+
                     enPassantCapture = true;
 
                 }
