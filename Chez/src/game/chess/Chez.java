@@ -393,36 +393,43 @@ public class Chez {
             //attacking en passant.
             if (gameBoard[destRow][destCol] == null && epPiece instanceof Pawn && epPiece.COLOR != playerColor) {
 
-                String previousMoveStr = moveList.get( moveList.size()-1 );
-                if (previousMoveStr == null) previousMoveStr = "";
-                int pawnTwoStepRow = epPiece.COLOR == Color.BLACK ? 3 : 4;
-                int previousMoveRow = 8 - (Integer.parseInt(previousMoveStr.substring(1))); //convert from display row to array index (inverted).
+                String previousMoveStr = null;
 
-                //can only move en passant IMMEDIATELY after opponent moved 2 squares forward in initial pawn movement.
-                if (previousMoveStr.length() == 2 && previousMoveRow == pawnTwoStepRow) { //length 2 move string implies pawn. (just col & row)
+                if (moveList.size() > 0) {
+                    previousMoveStr = moveList.get( moveList.size()-1 );
+                }
 
+                if (previousMoveStr != null && previousMoveStr.length() == 2) { //length 2 move string implies pawn. (just col & row)
 
-                    if (epPiece.timesMoved == 1 && epPiece.currentRow == pawnTwoStepRow) {
+                    int pawnTwoStepRow = epPiece.COLOR == Color.BLACK ? 3 : 4; //2 rows after the initial pawn starting row
+                    int previousMoveRow = 8 - (Integer.parseInt(previousMoveStr.substring(1))); //convert from display row to array index (inverted).
 
-                        if (destCol - 1 >= 0) {
-                            Piece leftPiece = gameBoard[prevPawnRow][destCol - 1];
+                    //can only move en passant IMMEDIATELY after opponent moved 2 squares forward in initial pawn movement.
+                    if (previousMoveRow == pawnTwoStepRow) {
 
-                            if (leftPiece instanceof Pawn && leftPiece.COLOR == playerColor) {
-                                pieceChoices.add(leftPiece);
+                        if (epPiece.timesMoved == 1 && epPiece.currentRow == pawnTwoStepRow) {
+
+                            if (destCol - 1 >= 0) {
+                                Piece leftPiece = gameBoard[prevPawnRow][destCol - 1];
+
+                                if (leftPiece instanceof Pawn && leftPiece.COLOR == playerColor) {
+                                    pieceChoices.add(leftPiece);
+                                }
+
+                            }
+
+                            if (destCol + 1 < 8) {
+                                Piece rightPiece = gameBoard[prevPawnRow][destCol + 1];
+
+                                if (rightPiece instanceof Pawn && rightPiece.COLOR == playerColor) {
+                                    pieceChoices.add(rightPiece);
+                                }
+
                             }
 
                         }
-
-                        if (destCol + 1 < 8) {
-                            Piece rightPiece = gameBoard[prevPawnRow][destCol + 1];
-
-                            if (rightPiece instanceof Pawn && rightPiece.COLOR == playerColor) {
-                                pieceChoices.add(rightPiece);
-                            }
-
-                        }
-
                     }
+
                 }
 
             }
