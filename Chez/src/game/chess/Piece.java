@@ -1,6 +1,8 @@
 package game.chess;
 
 
+import java.util.ArrayList;
+
 enum Color {
     WHITE,
     BLACK
@@ -17,8 +19,10 @@ abstract class Piece {
 
     int currentRow;
     int currentCol;
-    int timesMoved = 0;
+    int timesMoved;
     boolean captured = false;
+
+    Piece[][] gameBoard = new Piece[8][8];
 
 
     Piece(Color color, String name) {
@@ -32,27 +36,35 @@ abstract class Piece {
 
     }
 
-    Piece(Color color, String name, int row, int col) {
+    Piece(Color color, String name, int row, int col, Piece[][] gameBoard) {
         this(color, name);
+        this.gameBoard = gameBoard;
+        this.currentRow = row;
+        this.currentCol = col;
         place(row, col);
+        timesMoved = 0; //timesMoved increments on calls to place() method in gameplay. so reset to 0 in constructor call only.
     }
+
 
 
     public void place(int row, int col) {
         if (!outOfBounds(row) && !(outOfBounds(col))) {
+            gameBoard[currentRow][currentCol] = null;
             currentRow = row;
             currentCol = col;
+            gameBoard[row][col] = this;
+            ++timesMoved;
         }
     }
 
 
-    abstract boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points);
+    abstract boolean move(int row, int col, int[] points);
 
     protected static boolean outOfBounds(int rowOrCol) {
         return rowOrCol < 0 || rowOrCol >= 8;
     }
 
-    boolean isBlockedPath(Piece[][] gameBoard, int newRow, int newCol) {
+    boolean isBlockedPath(int newRow, int newCol) {
 
         int rowChange = Math.abs(currentRow - newRow);
         int colChange = Math.abs(currentCol - newCol);
@@ -86,7 +98,7 @@ abstract class Piece {
         return false;
     }
 
-    protected static Piece findNearestPiece(Piece[][] gameBoard, Integer[] rowAndCol, int rChange, int cChange) {
+    static Piece findNearestPiece(Piece[][] gameBoard, Integer[] rowAndCol, int rChange, int cChange) {
 
         int row = rowAndCol[0] + rChange;
         int col = rowAndCol[1] + cChange;
@@ -111,12 +123,29 @@ abstract class Piece {
 
     static boolean isSquareUnderAttack(Piece[][] gameBoard, int checkRow, int checkCol, Color otherTeamColor) {
 
-        //  0   [1]   2   [3]   4
-        //  [5]   6   7   8   [9]
-        //  10  11  -12-  13  14
-        //  [15]  16  17  18  [19]
-        //  20  [21]  22  [23]  24
+        Integer[] checkRowAndCol = { checkRow, checkCol };
+        ArrayList<Piece> attackingPieces = findAttackingPieces(gameBoard, checkRowAndCol, otherTeamColor, true);
+        
+        return attackingPieces.size() > 0;
 
+    }
+
+    /**
+     * Find all the enemy pieces attacking a particular square of the board. Also used to determine if a square is being attacked
+     * by any piece, by optionally returning immediately when the first attacking piece is found.
+     *
+     * @param gameBoard The game board which is a 2-d array of Piece objects.
+     * @param checkRowAndCol An Integer array containing the row and column to check in position 0 and 1 respectively.
+     * @param otherTeamColor The enemy piece's color.
+     * @param quickCheck Toggle immediate (short-circuit) return on discovery of any attacking piece (e.g. for determining if a King is in check).
+     * @return An ArrayList of all the pieces attacking that square.
+     */
+    static ArrayList<Piece> findAttackingPieces(Piece[][] gameBoard, Integer[] checkRowAndCol, Color otherTeamColor, boolean quickCheck) {
+
+        ArrayList<Piece> attackingPieces = new ArrayList<>();
+
+        int checkRow = checkRowAndCol[0];
+        int checkCol = checkRowAndCol[1];
 
         //knight check needs special treatment as knights can jump
         int[][] validKnightMoveSquares = {
@@ -142,11 +171,16 @@ abstract class Piece {
 
             Piece checkPiece = gameBoard[nRow][nCol];
 
-            if (checkPiece != null && checkPiece.COLOR == otherTeamColor && checkPiece instanceof Knight) {
-                return true;
+            if (checkPiece instanceof Knight && checkPiece.COLOR == otherTeamColor) {
+                attackingPieces.add(checkPiece);
+                
+                if (quickCheck) {
+                    return attackingPieces;
+                }
             }
 
         }
+
 
         int[] rowAndCol = { checkRow, checkCol };
         int pieceIndex = 0;
@@ -157,12 +191,20 @@ abstract class Piece {
         Piece leftPossPawn = gameBoard[pawnAttackRow][checkCol - 1];
         Piece rightPossPawn = gameBoard[pawnAttackRow][checkCol + 1];
 
-        if (leftPossPawn != null && leftPossPawn.COLOR == otherTeamColor && leftPossPawn instanceof Pawn) {
-            return true;
+        if (leftPossPawn instanceof Pawn && leftPossPawn.COLOR == otherTeamColor) {
+            attackingPieces.add(leftPossPawn);
+            
+            if (quickCheck) {
+                return attackingPieces;
+            }
         }
 
-        if (rightPossPawn != null && rightPossPawn.COLOR == otherTeamColor && rightPossPawn instanceof Pawn) {
-            return true;
+        if (rightPossPawn instanceof Pawn && rightPossPawn.COLOR == otherTeamColor) {
+            attackingPieces.add(rightPossPawn);
+            
+            if (quickCheck) {
+                return attackingPieces;
+            }
         }
 
 
@@ -183,25 +225,26 @@ abstract class Piece {
 
                 Integer[] checkRowCol = { rowAndCol[0], rowAndCol[1] } ;
                 Piece nextNearPiece = findNearestPiece(gameBoard, checkRowCol, rChange, cChange);
+                int piecesSize = attackingPieces.size();
 
                 if (nextNearPiece != null && nextNearPiece.COLOR == otherTeamColor) {
 
                     //queen attacks in any direction, any number of squares
                     if (nextNearPiece instanceof Queen) {
-                        return true;
+                        attackingPieces.add(nextNearPiece);
                     }
 
                     //bishop - diagonal, unlimited
                     if (pieceIndex % 2 == 1) {
                         if (nextNearPiece instanceof Bishop) {
-                            return true;
+                            attackingPieces.add(nextNearPiece);
                         }
                     }
 
                     //rook - straight, unlimited
                     if (pieceIndex % 2 == 0) {
                         if (nextNearPiece instanceof Rook) {
-                            return true;
+                            attackingPieces.add(nextNearPiece);
                         }
                     }
 
@@ -209,15 +252,21 @@ abstract class Piece {
                     if (nextNearPiece instanceof King) {
                         if ( Math.abs(nextNearPiece.currentRow - checkRow) <= 1 && //max 1 col, 1 row away to attack
                                 Math.abs(nextNearPiece.currentCol - checkCol) <= 1) {
-                            return true;
+                            attackingPieces.add(nextNearPiece);
                         }
                     }
+                }
+
+                if (piecesSize < attackingPieces.size() && quickCheck) {
+                    return attackingPieces;
                 }
             }
         }
 
 
-        return false;
+        return attackingPieces;
+
+
     }
 
     abstract String getShortName();

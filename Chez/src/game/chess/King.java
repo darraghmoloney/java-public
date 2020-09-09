@@ -1,36 +1,35 @@
 package game.chess;
 
+import java.util.ArrayList;
+
 class King extends Piece {
 
     boolean inCheck;
     boolean performedCastle;
     boolean queenSideCastle;
 
-    King(Color color, int row, int col) {
-        super(color, "King", row, col);
+    King(Color color, int row, int col, Piece[][] gameBoard) {
+        super(color, "King", row, col, gameBoard);
     }
 
 
     @Override
-    boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
+    boolean move(int row, int col, int[] points) {
 
         performedCastle = false;
         queenSideCastle = false;
 
-        int newRow = rowAndCol[0];
-        int newCol = rowAndCol[1];
-
-        if (Piece.outOfBounds(newRow) || Piece.outOfBounds(newCol)) {
+        if (Piece.outOfBounds(row) || Piece.outOfBounds(col)) {
             System.out.println("out of bounds");
             return false;
         }
 
-        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == this.COLOR) {
+        if (gameBoard[row][col] != null && gameBoard[row][col].COLOR == this.COLOR) {
             return false;
         }
 
-        int rowChange = Math.abs(currentRow - newRow);
-        int colChange = Math.abs(currentCol - newCol);
+        int rowChange = Math.abs(currentRow - row);
+        int colChange = Math.abs(currentCol - col);
 
         int homeRow = COLOR == Color.BLACK ? 0 : 7;
 
@@ -41,40 +40,35 @@ class King extends Piece {
 
         //castling.
         if (colChange == 2) {
-            boolean onQueenSide = newCol < 4;
-            return checkCastling(gameBoard, onQueenSide);
+            boolean onQueenSide = col < 4;
+            return checkCastling(onQueenSide);
         }
 
         //attacking
-        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
+        if (gameBoard[row][col] != null && gameBoard[row][col].COLOR == ENEMY_COLOR) {
 
-            gameBoard[newRow][newCol].captured = true;
+            gameBoard[row][col].captured = true;
 
             if (COLOR == Color.WHITE) {
-                points[0] += gameBoard[newRow][newCol].VALUE;
+                points[0] += gameBoard[row][col].VALUE;
             } else {
-                points[1] += gameBoard[newRow][newCol].VALUE;
+                points[1] += gameBoard[row][col].VALUE;
             }
         }
 
         //update board
-        gameBoard[currentRow][currentCol] = null;
-        currentRow = newRow;
-        currentCol = newCol;
-        gameBoard[currentRow][currentCol] = this;
+        place(row, col);
 
-        ++timesMoved;
         return true;
     }
 
-    boolean isInCheck(Piece[][] gameBoard) {
+    boolean isInCheck() {
         inCheck = isSquareUnderAttack(gameBoard, currentRow, currentCol, ENEMY_COLOR);
         return inCheck;
     }
 
-    //castling is TECHNICALLY a King move
-    //TODO: implement castling in King class
-    private boolean checkCastling(Piece[][] gameBoard, boolean queenSide) {
+    //castling is TECHNICALLY a King move, even though it also involves a Rook
+    private boolean checkCastling(boolean queenSide) {
 
         if (currentCol != 4)
             return false; //col. 4 is king's initial spot. castling requires both king & rook to not have moved
@@ -98,7 +92,7 @@ class King extends Piece {
         if (rookToMove.COLOR == ENEMY_COLOR) return false;
         if (rookToMove.timesMoved > 0) return false;
 
-        if (isBlockedPath(gameBoard, currentRow, newCol)) return false;
+        if (isBlockedPath(currentRow, newCol)) return false;
 
         int newRookCol = 5;
 
@@ -118,21 +112,78 @@ class King extends Piece {
         }
 
         //move king.
-        gameBoard[currentRow][currentCol] = null;
-        currentCol = newCol;
-        gameBoard[currentRow][currentCol] = this;
+        this.place(currentRow, newCol);
 
         //move rook.
-        gameBoard[currentRow][rookCol] = null;
-        rookToMove.currentCol = newRookCol;
-        gameBoard[currentRow][newRookCol] = rookToMove;
+        rookToMove.place(currentRow, newRookCol);
 
-        ++timesMoved;
-        ++rookToMove.timesMoved;
         performedCastle = true;
+
         return true;
 
 
+    }
+
+    //determine whether the King has no possible way to escape from check
+    boolean isCheckmated() {
+
+        //1. see if the king can move to a space that isn't under attack.
+        for (int checkRow = currentRow - 1; checkRow < currentRow + 2; ++checkRow) {
+            for (int checkCol = currentCol - 1; checkCol < currentCol + 2; ++checkCol) {
+
+                if (Piece.outOfBounds(checkRow) || Piece.outOfBounds(checkCol)) continue;
+                if (checkRow == 0 && checkCol == 0) continue;
+
+                if (gameBoard[checkRow][checkCol] != null) continue;
+
+                if (!isSquareUnderAttack(gameBoard, checkRow, checkCol, ENEMY_COLOR)) {
+                  return false; //a spot that is in bounds, not the same spot, free, and not being attacked.
+                }
+
+            }
+        }
+
+        //2. determine the pieces that are attacking the king. if there is  only 1 attacking piece, check if that piece can be attacked.
+        Integer[] checkRowAndCol = { currentRow, currentCol };
+        ArrayList<Piece> attackers = findAttackingPieces(gameBoard, checkRowAndCol, ENEMY_COLOR, false);
+
+        if (attackers.size() == 1) {
+            Piece attackPiece = attackers.get(0);
+
+            if (isSquareUnderAttack(gameBoard, attackPiece.currentRow, attackPiece.currentCol, this.COLOR)) {
+                return false;
+            }
+        }
+
+        //3. if there is 1 piece only attacking the king, for the line of attack, see if any pieces can be moved into it
+        // to block the move. (check each square of the line of attack to see if it can be attacked by king's color pieces.)
+        if (attackers.size() == 1) {
+            Piece attackPiece = attackers.get(0);
+
+            int rowChange = attackPiece.currentRow < this.currentRow ? 1 : -1;
+            int colChange = attackPiece.currentCol < this.currentCol ? 1 : -1;
+
+            int nextAttRow = attackPiece.currentRow + rowChange;
+            int nextAttCol = attackPiece.currentCol + colChange;
+
+            //check one step forward. stop at King's location.
+            while (!(nextAttRow == this.currentRow && nextAttCol != this.currentCol)) {
+
+                if (isSquareUnderAttack(gameBoard, nextAttRow, nextAttCol, this.COLOR)) {
+                    return false;
+                }
+
+                nextAttRow += rowChange;
+                nextAttCol += colChange;
+
+            }
+
+        }
+
+        //if there are more than 2 pieces attacking the king, the only possible escape is to move the king. if we
+        //have reached this point, checkmate is true.
+
+        return true;
     }
 
     @Override

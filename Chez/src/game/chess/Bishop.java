@@ -3,63 +3,56 @@ package game.chess;
 class Bishop extends Piece {
 
 
-    Bishop(Color color, int row, int col) {
-        super(color, "Bishop", row, col);
+    Bishop(Color color, int row, int col, Piece[][] gameBoard) {
+        super(color, "Bishop", row, col, gameBoard);
     }
 
 
     @Override
-    boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
+    boolean move(int row, int col, int[] points) {
 
-        int newRow = rowAndCol[0];
-        int newCol = rowAndCol[1];
-
-        if (Piece.outOfBounds(newRow) || Piece.outOfBounds(newCol)) {
+        if (Piece.outOfBounds(row) || Piece.outOfBounds(col)) {
             System.out.println("out of bounds");
             return false;
         }
 
         //check for same place - no movement, or straight-up / across movement.
-        if (newRow == currentRow || newCol == currentCol) {
+        if (row == currentRow || col == currentCol) {
             return false;
         }
 
-        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == this.COLOR) {
+        if (gameBoard[row][col] != null && gameBoard[row][col].COLOR == this.COLOR) {
             return false;
         }
 
-        int totalRowChange = Math.abs(currentRow - newRow);
-        int totalColChange = Math.abs(currentCol - newCol);
+        int totalRowChange = Math.abs(currentRow - row);
+        int totalColChange = Math.abs(currentCol - col);
 
         //as Bishop moves diagonally in straight lines, both row & col must change at 1:1 rate.
         if (totalRowChange != totalColChange) {
             return false;
         }
 
-        if (isBlockedPath(gameBoard, newRow, newCol)) {
+        if (isBlockedPath(row, col)) {
             return false;
         }
 
         //attacking
-        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
+        if (gameBoard[row][col] != null && gameBoard[row][col].COLOR == ENEMY_COLOR) {
 
-            gameBoard[newRow][newCol].captured = true;
+            gameBoard[row][col].captured = true;
 
             if (COLOR == Color.WHITE) {
-                points[0] += gameBoard[newRow][newCol].VALUE;
+                points[0] += gameBoard[row][col].VALUE;
             } else {
-                points[1] += gameBoard[newRow][newCol].VALUE;
+                points[1] += gameBoard[row][col].VALUE;
             }
 
         }
 
         //update board
-        gameBoard[currentRow][currentCol] = null;
-        currentRow = newRow;
-        currentCol = newCol;
-        gameBoard[currentRow][currentCol] = this;
+        place(row, col);
 
-        ++timesMoved;
         return true;
 
     }

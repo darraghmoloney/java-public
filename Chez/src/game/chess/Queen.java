@@ -3,22 +3,19 @@ package game.chess;
 class Queen extends Piece {
 
 
-    Queen(Color color, int row, int col) {
-        super(color, "Queen", row, col);
+    Queen(Color color, int row, int col, Piece[][] gameBoard) {
+        super(color, "Queen", row, col, gameBoard);
     }
 
     @Override
-    boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
+    boolean move(int row, int col, int[] points) {
 
-        int newRow = rowAndCol[0];
-        int newCol = rowAndCol[1];
-
-        if (Piece.outOfBounds(newRow) || Piece.outOfBounds(newCol)) {
+        if (Piece.outOfBounds(row) || Piece.outOfBounds(col)) {
             return false;
         }
 
-        int rowChange = Math.abs(currentRow - newRow); //absolute value as may move "back" in one of the directions
-        int colChange = Math.abs(currentCol - newCol);
+        int rowChange = Math.abs(currentRow - row); //absolute value as may move "back" in one of the directions
+        int colChange = Math.abs(currentCol - col);
 
         if (rowChange != 0 && colChange != 0) { //diagonal
             if (rowChange != colChange) { //asymmetric change not possible
@@ -27,34 +24,30 @@ class Queen extends Piece {
             }
         }
 
-        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == this.COLOR) { //same color piece in that spot
+        if (gameBoard[row][col] != null && gameBoard[row][col].COLOR == this.COLOR) { //same color piece in that spot
             return false;
         }
 
-        if (isBlockedPath(gameBoard, newRow, newCol)) {
+        if (isBlockedPath(row, col)) {
             return false;
         }
 
         //attacking
-        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
+        if (gameBoard[row][col] != null && gameBoard[row][col].COLOR == ENEMY_COLOR) {
 
-            gameBoard[newRow][newCol].captured = true;
+            gameBoard[row][col].captured = true;
 
             if (COLOR == Color.WHITE) {
-                points[0] += gameBoard[newRow][newCol].VALUE;
+                points[0] += gameBoard[row][col].VALUE;
             } else {
-                points[1] += gameBoard[newRow][newCol].VALUE;
+                points[1] += gameBoard[row][col].VALUE;
             }
 
         }
 
         //update board
-        gameBoard[currentRow][currentCol] = null;
-        currentRow = newRow;
-        currentCol = newCol;
-        gameBoard[currentRow][currentCol] = this;
+        place(row, col);
 
-        ++timesMoved;
         return true;
 
     }
