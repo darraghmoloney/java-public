@@ -151,6 +151,16 @@ class King extends Piece {
             Piece attackPiece = attackers.get(0);
 
             if (isSquareUnderAttack(gameBoard, attackPiece.currentRow, attackPiece.currentCol, this.COLOR)) {
+
+                Integer[] attackerRowCol = { attackPiece.currentRow, attackPiece.currentCol };
+                ArrayList<Piece> defenders = findAttackingPieces(gameBoard, attackerRowCol, this.COLOR, false);
+
+                //if the only defending piece is the King, and the attack move is to a square that can be attacked by the enemy,
+                //the King is checkmated.
+                if (defenders.size() == 1 && defenders.get(0) == this) {
+                    System.out.println(this);
+                    return isSquareUnderAttack(gameBoard, attackPiece.currentRow, attackPiece.currentCol, ENEMY_COLOR);
+                }
                 return false;
             }
         }
