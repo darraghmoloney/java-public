@@ -22,35 +22,35 @@ public class Chez {
 
         //pawns
         for (int square = 0; square < 8; ++square) {
-            gameBoard[1][square] = new Pawn(Color.BLACK, 1, square);
-            gameBoard[6][square] = new Pawn(Color.WHITE, 6, square);
+            gameBoard[1][square] = new Pawn(Color.BLACK, 1, square, gameBoard);
+            gameBoard[6][square] = new Pawn(Color.WHITE, 6, square, gameBoard);
         }
 
         //rooks
-        gameBoard[0][0] = new Rook(Color.BLACK, 0, 0);
-        gameBoard[0][7] = new Rook(Color.BLACK, 0, 7);
-        gameBoard[7][0] = new Rook(Color.WHITE, 7, 0);
-        gameBoard[7][7] = new Rook(Color.WHITE, 7, 7);
+        gameBoard[0][0] = new Rook(Color.BLACK, 0, 0, gameBoard);
+        gameBoard[0][7] = new Rook(Color.BLACK, 0, 7, gameBoard);
+        gameBoard[7][0] = new Rook(Color.WHITE, 7, 0, gameBoard);
+        gameBoard[7][7] = new Rook(Color.WHITE, 7, 7, gameBoard);
 
         //knights
-        gameBoard[0][1] = new Knight(Color.BLACK, 0, 1);
-        gameBoard[0][6] = new Knight(Color.BLACK, 0, 6);
-        gameBoard[7][1] = new Knight(Color.WHITE, 7, 1);
-        gameBoard[7][6] = new Knight(Color.WHITE, 7, 6);
+        gameBoard[0][1] = new Knight(Color.BLACK, 0, 1, gameBoard);
+        gameBoard[0][6] = new Knight(Color.BLACK, 0, 6, gameBoard);
+        gameBoard[7][1] = new Knight(Color.WHITE, 7, 1, gameBoard);
+        gameBoard[7][6] = new Knight(Color.WHITE, 7, 6, gameBoard);
 
         //bishops
-        gameBoard[0][2] = new Bishop(Color.BLACK, 0, 2);
-        gameBoard[0][5] = new Bishop(Color.BLACK, 0, 5);
-        gameBoard[7][2] = new Bishop(Color.WHITE, 7, 2);
-        gameBoard[7][5] = new Bishop(Color.WHITE, 7, 5);
+        gameBoard[0][2] = new Bishop(Color.BLACK, 0, 2, gameBoard);
+        gameBoard[0][5] = new Bishop(Color.BLACK, 0, 5, gameBoard);
+        gameBoard[7][2] = new Bishop(Color.WHITE, 7, 2, gameBoard);
+        gameBoard[7][5] = new Bishop(Color.WHITE, 7, 5, gameBoard);
 
         //queens
-        gameBoard[0][3] = new Queen(Color.BLACK, 0, 3);
-        gameBoard[7][3] = new Queen(Color.WHITE, 7, 3);
+        gameBoard[0][3] = new Queen(Color.BLACK, 0, 3, gameBoard);
+        gameBoard[7][3] = new Queen(Color.WHITE, 7, 3, gameBoard);
 
         //kings
-        gameBoard[0][4] = new King(Color.BLACK, 0, 4);
-        gameBoard[7][4] = new King(Color.WHITE, 7, 4);
+        gameBoard[0][4] = new King(Color.BLACK, 0, 4, gameBoard);
+        gameBoard[7][4] = new King(Color.WHITE, 7, 4, gameBoard);
 
     }
 
@@ -118,7 +118,6 @@ public class Chez {
 
             int moveRow = moveRowCol[0];
             int moveCol = moveRowCol[1];
-            int[] moveRowAndCol = {moveRow, moveCol};
 
             System.out.println();
 
@@ -133,11 +132,11 @@ public class Chez {
 
             String pieceStr = chosenPiece.getAlphanumericLoc();
 
-            boolean wKingWasInCheck = ((King) gameBoard[ wKingLoc[0] ][ wKingLoc[1] ]).inCheck;
-            boolean bKingWasInCheck = ((King) gameBoard[ bKingLoc[0] ][ bKingLoc[1] ]).inCheck;
+            boolean wKingWasInCheck = ((King) gameBoard[wKingLoc[0]][wKingLoc[1]]).inCheck;
+            boolean bKingWasInCheck = ((King) gameBoard[bKingLoc[0]][bKingLoc[1]]).inCheck;
 
             boolean attackAttempt = gameBoard[moveRow][moveCol] != null;
-            boolean validMove = chosenPiece.move(gameBoard, moveRowAndCol, points);
+            boolean validMove = chosenPiece.move(moveRow, moveCol, points);
 
             //after successful move, king will be there
             boolean kingMoved = gameBoard[moveRow][moveCol] instanceof King;
@@ -167,7 +166,7 @@ public class Chez {
                             moveNotation += "e.p.";
                         }
 
-                    } else{
+                    } else {
                         moveNotation = moveStr.charAt(0) + "x" + moveStr.substring(1);
                     }
                 }
@@ -184,15 +183,9 @@ public class Chez {
                 }
 
                 if (attackingKing) { //valid attack on king -> checkmate.
-                    moveNotation += "#";
-                    System.out.println("checkmate");
-                    System.out.println(currentPlayerColor + " wins");
-                    gameOver = true;
 
-                    moveList.add(moveNotation);
+                    checkmated = true;
 
-                    showBoard();
-                    printMovesList();
                 } else {
 
                     King wKing = (King) gameBoard[wKingLoc[0]][wKingLoc[1]];
@@ -204,16 +197,24 @@ public class Chez {
                         bKing = (King) gameBoard[bKingLoc[0]][bKingLoc[1]];
                     }
 
-                    if (wKing.isInCheck(gameBoard)) {
+                    if (wKing.isInCheck()) {
                         System.out.println("check for w. king");
+
+                        if (wKing.isCheckmated()) {
+                            checkmated = true;
+                        }
 
                         if (!wKingWasInCheck && currentPlayerColor == Color.BLACK) {
                             moveNotation += "+";
                         }
                     }
 
-                    if (bKing.isInCheck(gameBoard)) {
+                    if (bKing.isInCheck()) {
                         System.out.println("check for b. king");
+
+                        if (bKing.isCheckmated()) {
+                            checkmated = true;
+                        }
 
                         if (!bKingWasInCheck && currentPlayerColor == Color.WHITE) {
                             moveNotation += "+";
@@ -221,14 +222,27 @@ public class Chez {
                     }
                 }
 
+                if (checkmated) {
+                    moveNotation += "#";
+                    System.out.println("CHECKMATE");
+                    System.out.println(currentPlayerColor + " wins");
+                    gameOver = true;
+
+                }
+
                 moveList.add(moveNotation);
+
 
                 currentPlayerColor = currentPlayerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
 
             }
 
-            if (!gameOver) {
-                showBoard();
+
+            showBoard();
+
+
+            if (checkmated) {
+                printMovesList();
             }
 
         }
@@ -252,14 +266,14 @@ public class Chez {
         int kingsCount = 0;
 
         for (int row = 0; row < 8; ++row) {
-            System.out.print((8 - row) + "|"); //countdown rows from 8.
+            System.out.print((8 - row) + " |"); //countdown rows from 8.
 
             for (int col = 0; col < 8; ++col) {
                 Piece square = gameBoard[row][col];
 
                 if (square == null) {
                     if (row % 2 != col % 2) { //odd - even squares are different.
-                        System.out.print(" " + blackSquare + " ");
+                        System.out.print(" " + blackSquare + "|");
                     } else {
                         System.out.print(" " + whiteSquare + " ");
                     }
@@ -280,10 +294,10 @@ public class Chez {
                 }
 
             }
-            System.out.println(" |");
+            System.out.println(" | ");
         }
 
-        System.out.println("  --------------------------");
+        System.out.println("   --------------------------");
 
 
         if (kingsCount < 2) {
@@ -396,7 +410,7 @@ public class Chez {
                 String previousMoveStr = null;
 
                 if (moveList.size() > 0) {
-                    previousMoveStr = moveList.get( moveList.size()-1 );
+                    previousMoveStr = moveList.get(moveList.size() - 1);
                 }
 
                 if (previousMoveStr != null && previousMoveStr.length() == 2) { //length 2 move string implies pawn. (just col & row)
@@ -607,7 +621,7 @@ public class Chez {
                         bKingLoc[0] = piece.currentRow;
                         bKingLoc[1] = piece.currentCol;
                     } else {
-                        wKingLoc[0] = piece.currentRow;;
+                        wKingLoc[0] = piece.currentRow;
                         wKingLoc[1] = piece.currentCol;
                     }
 

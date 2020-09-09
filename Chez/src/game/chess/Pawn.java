@@ -10,89 +10,71 @@ class Pawn extends Piece {
     boolean enPassantCapture; //for game record notation
     boolean promoted;
 
-    Pawn(Color color, int row, int col) {
-        super(color, "Pawn", row, col);
+    Pawn(Color color, int row, int col, Piece[][] gameBoard) {
+        super(color, "Pawn", row, col, gameBoard);
     }
 
 
     @Override
-    public boolean move(Piece[][] gameBoard, int[] rowAndCol, int[] points) {
-
-        int newRow = rowAndCol[0];
-        int newCol = rowAndCol[1];
+    public boolean move(int row, int col, int[] points) {
 
         enPassantCapture = false;
         promoted = false;
 
-        if (Piece.outOfBounds(newRow) || Piece.outOfBounds(newCol)) {
+        if (Piece.outOfBounds(row) || Piece.outOfBounds(col)) {
             return false;
         }
 
-        if (Math.abs(currentRow - newRow) < 1 || Math.abs(currentRow - newRow) > 2) {
+        if (Math.abs(currentRow - row) < 1 || Math.abs(currentRow - row) > 2) {
             return false;
         }
 
-        if (Math.abs(currentRow - newRow) == 2 && timesMoved != 0) {
+        if (Math.abs(currentRow - row) == 2 && timesMoved != 0) {
             System.out.println("can only move 2 squares on first move");
             return false;
         }
 
-        if (COLOR == Color.WHITE && newRow >= currentRow ||
-                COLOR == Color.BLACK && newRow <= currentRow
+        if (COLOR == Color.WHITE && row >= currentRow ||
+                COLOR == Color.BLACK && row <= currentRow
         ) {
             return false;
         }
 
-        if (gameBoard[newRow][newCol] != null && gameBoard[newRow][newCol].COLOR == this.COLOR) {
+        if (gameBoard[row][col] != null && gameBoard[row][col].COLOR == this.COLOR) {
             return false;
         }
 
         int enemyHomeIndex = COLOR == Color.WHITE ? BLACK_HOME_ROW : WHITE_HOME_ROW;
 
-        if (newCol == currentCol) { //straight line progression
+        if (col == currentCol) { //straight line progression
 
-            if (gameBoard[newRow][newCol] != null) {
+            if (gameBoard[row][col] != null) {
                 System.out.println("can't move pawn - blocked");
                 return false;
             }
 
-            gameBoard[currentRow][currentCol] = null;
-
-
-            //promote at enemy home row.
-            if (newRow == enemyHomeIndex) {
-                promotePawn(gameBoard, newRow, newCol);
-                return true;
-            }
-
-            currentRow = newRow;
-            gameBoard[currentRow][currentCol] = this;
-
-            ++timesMoved;
-            return true;
-
         }
 
         //attacking to board left / right.
-        if (newCol == currentCol - 1 || newCol == currentCol + 1) {
+        if (col == currentCol - 1 || col == currentCol + 1) {
 
 
             Piece attackedPiece = null;
 
-            if (this.COLOR == Color.WHITE && newRow != currentRow - 1 ||
-                    this.COLOR == Color.BLACK && newRow != currentRow + 1) {
+            if (this.COLOR == Color.WHITE && row != currentRow - 1 ||
+                    this.COLOR == Color.BLACK && row != currentRow + 1) { //EXACT check. general check of greater row & correct direction already done
                 return false;
             }
 
-            if (gameBoard[newRow][newCol] == null) {
+            if (gameBoard[row][col] == null) {
 
                 //en passant. capture a Pawn if it just moved 2 squares forward from its home row.
-                if (gameBoard[currentRow][newCol] instanceof Pawn && gameBoard[currentRow][newCol].COLOR == ENEMY_COLOR) {
+                if (gameBoard[currentRow][col] instanceof Pawn && gameBoard[currentRow][col].COLOR == ENEMY_COLOR) {
 
                     int epCaptureRow = COLOR == Color.BLACK ? 5 : 2; //i.e. the row in front of the pawn's starting row.
-                    if (newRow != epCaptureRow) return false;
+                    if (row != epCaptureRow) return false;
 
-                    attackedPiece = gameBoard[currentRow][newCol];
+                    attackedPiece = gameBoard[currentRow][col];
 
                     if (attackedPiece.timesMoved > 1) return false;
 
@@ -101,8 +83,8 @@ class Pawn extends Piece {
 
                 }
 
-            } else if (gameBoard[newRow][newCol].COLOR == ENEMY_COLOR) {
-                attackedPiece = gameBoard[newRow][newCol];
+            } else if (gameBoard[row][col].COLOR == ENEMY_COLOR) {
+                attackedPiece = gameBoard[row][col];
             }
 
             if (attackedPiece == null) {
@@ -118,28 +100,20 @@ class Pawn extends Piece {
                 points[1] += attackedPiece.VALUE;
             }
 
-            gameBoard[currentRow][currentCol] = null;
-
-            //convert to queen if enemy home row
-            if (newRow == enemyHomeIndex) {
-                promotePawn(gameBoard, newRow, newCol);
-                return true;
-            }
-
-
-            currentRow = newRow;
-            currentCol = newCol;
-            gameBoard[currentRow][currentCol] = this;
-
-            ++timesMoved;
-            return true;
-
         }
 
-        return false;
+        place(row, col);
+
+        //promote at enemy home row.
+        if (row == enemyHomeIndex) {
+            promotePawn(row, col);
+        }
+
+        return true;
+
     }
 
-    private void promotePawn(Piece[][] gameBoard, int newRow, int newCol) {
+    private void promotePawn(int newRow, int newCol) {
         promoted = true;
 
         System.out.print("promotion. choose [Q]ueen, k[N]ight, [R]ook, or [B]ishop: ");
@@ -156,16 +130,16 @@ class Pawn extends Piece {
 
         switch (choice) {
             case "N":
-                newPiece = new Knight(this.COLOR, newRow, newCol);
+                newPiece = new Knight(this.COLOR, newRow, newCol, gameBoard);
                 break;
             case "R":
-                newPiece = new Rook(this.COLOR, newRow, newCol);
+                newPiece = new Rook(this.COLOR, newRow, newCol, gameBoard);
                 break;
             case "B":
-                newPiece = new Bishop(this.COLOR, newRow, newCol);
+                newPiece = new Bishop(this.COLOR, newRow, newCol, gameBoard);
                 break;
             default:
-                newPiece = new Queen(this.COLOR, newRow, newCol);
+                newPiece = new Queen(this.COLOR, newRow, newCol, gameBoard);
         }
 
         gameBoard[newRow][newCol] = newPiece;
