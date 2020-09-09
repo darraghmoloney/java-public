@@ -1,6 +1,8 @@
 package game.chess;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 class King extends Piece {
 
@@ -147,6 +149,7 @@ class King extends Piece {
         Integer[] checkRowAndCol = { currentRow, currentCol };
         ArrayList<Piece> attackers = findAttackingPieces(gameBoard, checkRowAndCol, ENEMY_COLOR, false);
 
+
         if (attackers.size() == 1) {
             Piece attackPiece = attackers.get(0);
 
@@ -161,7 +164,6 @@ class King extends Piece {
                     System.out.println(this);
                     return isSquareUnderAttack(gameBoard, attackPiece.currentRow, attackPiece.currentCol, ENEMY_COLOR);
                 }
-                return false;
             }
         }
 
@@ -177,10 +179,34 @@ class King extends Piece {
             int nextAttCol = attackPiece.currentCol + colChange;
 
             //check one step forward. stop at King's location.
-            while (!(nextAttRow == this.currentRow && nextAttCol != this.currentCol)) {
+            while (nextAttRow != this.currentRow && nextAttCol != this.currentCol) {
 
                 if (isSquareUnderAttack(gameBoard, nextAttRow, nextAttCol, this.COLOR)) {
-                    return false;
+                    Integer[] nextRowCol = { nextAttRow, nextAttCol };
+
+                    //because pawn's attack movement is different, need to filter them out as this is a check
+                    //for pieces to block an EMPTY space. pawns attack to a diagonal corner.
+                    ArrayList<Piece> defenders = findAttackingPieces(gameBoard, nextRowCol, this.COLOR, false);
+
+                    List<Piece> defendersWithoutPawn = defenders.stream()
+                            .filter(d -> !(d instanceof Pawn || d == this)) //also filter out King
+                            .collect(Collectors.toList());
+
+                    int totalDefenders = defendersWithoutPawn.size();
+
+                    //add in any pawns that can move straight forward to that spot
+                    int pawnPrecedingRow = COLOR == Color.BLACK ? nextAttRow - 1 : nextAttRow + 1;
+
+                    if (!Piece.outOfBounds(pawnPrecedingRow) && gameBoard[pawnPrecedingRow][nextAttCol] instanceof Pawn) {
+                        if (gameBoard[pawnPrecedingRow][nextAttCol].COLOR == this.COLOR) {
+                            return false;
+                        }
+                    }
+
+                    if (totalDefenders > 0) {
+                        return false;
+                    }
+
                 }
 
                 nextAttRow += rowChange;

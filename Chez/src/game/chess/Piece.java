@@ -190,25 +190,31 @@ abstract class Piece {
 
         if (!Piece.outOfBounds(pawnAttackRow)) {
 
-            Piece leftPossPawn = gameBoard[pawnAttackRow][checkCol - 1];
-            Piece rightPossPawn = gameBoard[pawnAttackRow][checkCol + 1];
+            if (!Piece.outOfBounds(checkCol - 1)) {
+                Piece leftPossPawn = gameBoard[pawnAttackRow][checkCol - 1];
 
-            if (leftPossPawn instanceof Pawn && leftPossPawn.COLOR == otherTeamColor) {
-                attackingPieces.add(leftPossPawn);
 
-                if (quickCheck) {
-                    return attackingPieces;
+                if (leftPossPawn instanceof Pawn && leftPossPawn.COLOR == otherTeamColor) {
+                    attackingPieces.add(leftPossPawn);
+
+                    if (quickCheck) {
+                        return attackingPieces;
+                    }
                 }
             }
 
-            if (rightPossPawn instanceof Pawn && rightPossPawn.COLOR == otherTeamColor) {
-                attackingPieces.add(rightPossPawn);
+            if (!Piece.outOfBounds(checkCol + 1)) {
+                Piece rightPossPawn = gameBoard[pawnAttackRow][checkCol + 1];
 
-                if (quickCheck) {
-                    return attackingPieces;
+                if (rightPossPawn instanceof Pawn && rightPossPawn.COLOR == otherTeamColor) {
+                    attackingPieces.add(rightPossPawn);
+
+                    if (quickCheck) {
+                        return attackingPieces;
+                    }
                 }
-            }
 
+            }
         }
 
         //check all surrounds until piece found or bounds reached.
@@ -282,10 +288,16 @@ abstract class Piece {
         return (char) (currentCol + 'a') + "" + (8 - currentRow);
     }
 
+
+    static String convertRowColToAlphanumeric(int row, int col) {
+        return (char) (col + 'a') + "" + (8 - row);
+    }
+
+
     @Override
     public String toString() {
         String colorStr = this.COLOR == Color.WHITE ? "w" : "b";
-        return SHORT_NAME + colorStr;
+        return SHORT_NAME + colorStr + "(" + convertRowColToAlphanumeric(currentRow,currentCol) + ")";
     }
 
 }

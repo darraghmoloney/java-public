@@ -223,6 +223,10 @@ public class Chez {
                 }
 
                 if (checkmated) {
+                    //if the current move was already noted as check, update it
+                    if (moveNotation.charAt(moveNotation.length()-1) == '+') {
+                        moveNotation = moveNotation.substring(0, moveNotation.length() - 2);
+                    }
                     moveNotation += "#";
                     System.out.println("CHECKMATE");
                     System.out.println(currentPlayerColor + " wins");
@@ -330,6 +334,8 @@ public class Chez {
 
         return rowCol;
     }
+
+
 
     private Piece findPieceToMove(String movementStr, Color playerColor) {
 
