@@ -139,14 +139,14 @@ class King extends Piece {
                 if (gameBoard[checkRow][checkCol] != null) continue;
 
                 if (!isSquareUnderAttack(gameBoard, checkRow, checkCol, ENEMY_COLOR)) {
-                  return false; //a spot that is in bounds, not the same spot, free, and not being attacked.
+                    return false; //a spot that is in bounds, not the same spot, free, and not being attacked.
                 }
 
             }
         }
 
         //2. determine the pieces that are attacking the king. if there is  only 1 attacking piece, check if that piece can be attacked.
-        Integer[] checkRowAndCol = { currentRow, currentCol };
+        Integer[] checkRowAndCol = {currentRow, currentCol};
         ArrayList<Piece> attackers = findAttackingPieces(gameBoard, checkRowAndCol, ENEMY_COLOR, false);
 
 
@@ -155,8 +155,10 @@ class King extends Piece {
 
             if (isSquareUnderAttack(gameBoard, attackPiece.currentRow, attackPiece.currentCol, this.COLOR)) {
 
-                Integer[] attackerRowCol = { attackPiece.currentRow, attackPiece.currentCol };
+                Integer[] attackerRowCol = {attackPiece.currentRow, attackPiece.currentCol};
                 ArrayList<Piece> defenders = findAttackingPieces(gameBoard, attackerRowCol, this.COLOR, false);
+
+                System.out.println(defenders);
 
                 //if the only defending piece is the King, and the attack move is to a square that can be attacked by the enemy,
                 //the King is checkmated.
@@ -164,6 +166,12 @@ class King extends Piece {
                     System.out.println(this);
                     return isSquareUnderAttack(gameBoard, attackPiece.currentRow, attackPiece.currentCol, ENEMY_COLOR);
                 }
+
+                //if there is 1 defender that isn't the king, or more defenders possibly including the king
+                if (defenders.size() > 0) {
+                    return false;
+                }
+
             }
         }
 
@@ -182,19 +190,19 @@ class King extends Piece {
             while (nextAttRow != this.currentRow && nextAttCol != this.currentCol) {
 
                 if (isSquareUnderAttack(gameBoard, nextAttRow, nextAttCol, this.COLOR)) {
-                    Integer[] nextRowCol = { nextAttRow, nextAttCol };
+                    Integer[] nextRowCol = {nextAttRow, nextAttCol};
 
                     //because pawn's attack movement is different, need to filter them out as this is a check
                     //for pieces to block an EMPTY space. pawns attack to a diagonal corner.
                     ArrayList<Piece> defenders = findAttackingPieces(gameBoard, nextRowCol, this.COLOR, false);
 
                     List<Piece> defendersWithoutPawn = defenders.stream()
-                            .filter(d -> !(d instanceof Pawn || d == this)) //also filter out King
+                            .filter(d -> !(d instanceof Pawn || d == this)) //also filter out King, as it will be registered as attacking final adjacent square
                             .collect(Collectors.toList());
 
                     int totalDefenders = defendersWithoutPawn.size();
 
-                    //add in any pawns that can move straight forward to that spot
+                    //check for any pawns that can move straight forward to the current check spot
                     int pawnPrecedingRow = COLOR == Color.BLACK ? nextAttRow - 1 : nextAttRow + 1;
 
                     if (!Piece.outOfBounds(pawnPrecedingRow) && gameBoard[pawnPrecedingRow][nextAttCol] instanceof Pawn) {
