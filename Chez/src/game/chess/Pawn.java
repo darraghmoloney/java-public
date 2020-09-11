@@ -7,8 +7,8 @@ class Pawn extends Piece {
     final static int WHITE_HOME_ROW = 7;
     final static int BLACK_HOME_ROW = 0;
 
-    boolean enPassantCapture; //for game record notation
-    boolean promoted;
+    private boolean enPassantCapturing; //for game record notation
+    private boolean promoted;
 
     Pawn(Color color, int row, int col, Piece[][] gameBoard) {
         super(color, "Pawn", row, col, gameBoard);
@@ -18,7 +18,7 @@ class Pawn extends Piece {
     @Override
     public boolean move(int row, int col, int[] points) {
 
-        enPassantCapture = false;
+        enPassantCapturing = false;
         promoted = false;
 
         if (Piece.outOfBounds(row) || Piece.outOfBounds(col)) {
@@ -79,7 +79,7 @@ class Pawn extends Piece {
                     if (attackedPiece.timesMoved > 1) return false;
 
 
-                    enPassantCapture = true;
+                    enPassantCapturing = true;
 
                 }
 
@@ -147,6 +147,13 @@ class Pawn extends Piece {
         newPiece.timesMoved = timesMoved;
     }
 
+    public boolean isEnPassantCapturing() {
+        return enPassantCapturing;
+    }
+
+    public boolean isPromoted() {
+        return promoted;
+    }
 
     @Override
     String getShortName() {

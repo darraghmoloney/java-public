@@ -17,10 +17,10 @@ abstract class Piece {
     final String SHORT_NAME;
     final int VALUE;
 
-    int currentRow;
-    int currentCol;
-    int timesMoved;
-    boolean captured = false;
+    protected int currentRow;
+    protected int currentCol;
+    protected int timesMoved;
+    protected boolean captured = false;
 
     Piece[][] gameBoard = new Piece[8][8];
 
@@ -47,7 +47,7 @@ abstract class Piece {
 
 
 
-    public void place(int row, int col) {
+    protected void place(int row, int col) {
         if (!outOfBounds(row) && !(outOfBounds(col))) {
             gameBoard[currentRow][currentCol] = null;
             currentRow = row;
@@ -64,7 +64,7 @@ abstract class Piece {
         return rowOrCol < 0 || rowOrCol >= 8;
     }
 
-    boolean isBlockedPath(int newRow, int newCol) {
+    protected boolean isBlockedPath(int newRow, int newCol) {
 
         int rowChange = Math.abs(currentRow - newRow);
         int colChange = Math.abs(currentCol - newCol);
@@ -148,22 +148,10 @@ abstract class Piece {
         int checkCol = checkRowAndCol[1];
 
         //knight check needs special treatment as knights can jump
-        int[][] validKnightMoveSquares = {
-                { checkRow - 2, checkCol - 1 },
-                { checkRow - 2, checkCol + 1 },
-                { checkRow - 1, checkCol - 2},
-                { checkRow - 1, checkCol + 2},
+        for (int[] knightRowCol : Knight.knightMoveOffsets) {
 
-                { checkRow + 2, checkCol - 1 },
-                { checkRow + 2, checkCol + 1 },
-                { checkRow + 1, checkCol - 2},
-                { checkRow + 1, checkCol + 2},
-        };
-
-        for (int[] knightRowCol : validKnightMoveSquares) {
-
-            int nRow = knightRowCol[0];
-            int nCol = knightRowCol[1];
+            int nRow = checkRow + knightRowCol[0];
+            int nCol = checkCol + knightRowCol[1];
 
             if (nRow < 0 || nCol < 0 || nRow > 7 || nCol > 7) {
                 continue;

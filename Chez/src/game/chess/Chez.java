@@ -1,20 +1,26 @@
 package game.chess;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Scanner;
 
 public class Chez {
 
-    Piece[][] gameBoard;
-    boolean checkmated;
-    int moveCount = 1;
-    Color currentPlayerColor = Color.WHITE;
+    private final Piece[][] gameBoard;
+    private boolean checkmated;
+    private int moveCount = 1;
+    private Color currentPlayerColor = Color.WHITE;
 
-    ArrayList<String> moveList = new ArrayList<>(); //moves record
-    int[] points = new int[2];
+    private boolean multiPieceChoice;
+    private boolean multiChoiceSameCol;
+    private boolean multiChoiceSameRow;
 
-    int[] bKingLoc = {0, 4}; //store king locations to easily verify if king is in check or not
-    int[] wKingLoc = {7, 4};
+    private final ArrayList<String> moveList = new ArrayList<>(); //moves record
+    private final int[] points = new int[2];
+
+    private int[] bKingLoc = {0, 4}; //store king locations to easily verify if king is in check or not
+    private int[] wKingLoc = {7, 4};
 
     public Chez() {
 
@@ -62,7 +68,6 @@ public class Chez {
 
         while (!gameOver && !checkmated) {
 
-
             printMovesList();
 
             //TODO: add surrendering.
@@ -74,15 +79,20 @@ public class Chez {
 
             System.out.print("enter a move for " + currentPlayerColor + " (e.g. e4, Nh6, 0-0...), or q to quit: ");
             String moveStr = sc.next();
+            String[] moveInfo; //stores start position of piece if provided for disambiguation [0], and the move itself [1]
 
             if (moveStr.length() > 0 && moveStr.charAt(0) == 'q') {
                 break;
+            } else {
+                //sanitize move str input - for piece choice handling, rather than safety, but it also helps.
+                moveInfo = parseNotation(moveStr);
+                moveStr = moveInfo[1];
             }
 
-            Piece chosenPiece = findPieceToMove(moveStr, currentPlayerColor);
+            Piece chosenPiece = findPieceToMove(moveStr, currentPlayerColor, moveInfo[0]);
 
             //handle king-side castling.
-            if (moveStr.equals("0-0")) {
+            if (moveStr.equals("0-0") || moveStr.equals("O-O")) {
                 if (currentPlayerColor == Color.BLACK) {
                     moveStr = "Kg8";
                 } else {
@@ -91,7 +101,7 @@ public class Chez {
             }
 
             //handle queen-side castling.
-            if (moveStr.equals("0-0-0")) {
+            if (moveStr.equals("0-0-0") || moveStr.equals("O-O-O")) {
 
                 if (currentPlayerColor == Color.BLACK) {
                     moveStr = "Kc8";
@@ -105,8 +115,9 @@ public class Chez {
                 continue;
             }
 
+
             String rowColStr = moveStr;
-            if (moveStr.length() > 2) rowColStr = rowColStr.substring(1);
+            if (moveStr.length() > 2) rowColStr = rowColStr.substring(1); //location is after the piece short name
 
             Integer[] moveRowCol = convertAlphanumericToRowCol(rowColStr);
 
@@ -132,10 +143,15 @@ public class Chez {
 
             String pieceStr = chosenPiece.getAlphanumericLoc();
 
-            boolean wKingWasInCheck = ((King) gameBoard[wKingLoc[0]][wKingLoc[1]]).inCheck;
-            boolean bKingWasInCheck = ((King) gameBoard[bKingLoc[0]][bKingLoc[1]]).inCheck;
+            boolean wKingWasInCheck = ((King) gameBoard[wKingLoc[0]][wKingLoc[1]]).isInCheck();
+            boolean bKingWasInCheck = ((King) gameBoard[bKingLoc[0]][bKingLoc[1]]).isInCheck();
 
             boolean attackAttempt = gameBoard[moveRow][moveCol] != null;
+
+            //for extra disambiguation in notation if necessary
+            char chosenPieceCol = chosenPiece.getAlphanumericLoc().charAt(0);
+            char chosenPieceRow = chosenPiece.getAlphanumericLoc().charAt(1);
+
             boolean validMove = chosenPiece.move(moveRow, moveCol, points);
 
             //after successful move, king will be there
@@ -158,11 +174,11 @@ public class Chez {
 
                 moveNotation = moveStr;
 
-                if (attackAttempt || chosenPiece instanceof Pawn && ((Pawn) chosenPiece).enPassantCapture) {
+                if (attackAttempt || chosenPiece instanceof Pawn && ((Pawn) chosenPiece).isEnPassantCapturing()) {
                     if (chosenPiece instanceof Pawn) {
                         moveNotation = pieceStr.charAt(0) + "x" + moveStr;
 
-                        if (((Pawn) chosenPiece).enPassantCapture) {
+                        if (((Pawn) chosenPiece).isEnPassantCapturing()) {
                             moveNotation += "e.p.";
                         }
 
@@ -171,13 +187,32 @@ public class Chez {
                     }
                 }
 
-                if (chosenPiece instanceof Pawn && ((Pawn) chosenPiece).promoted) {
+
+                //notation to clarify which piece was chosen in case of multiple options. e.g. Nge7 means the knight at g was moved to e7.
+                //an attacking pawn will already record its move from the start col, so it's notation doesn't need to change.
+                if (multiPieceChoice && !(chosenPiece instanceof Pawn && (attackAttempt || ((Pawn) chosenPiece).isEnPassantCapturing()))) {
+
+                    String clarifyStr = "" + chosenPieceCol;
+
+                    if (multiChoiceSameCol && !multiChoiceSameRow) {
+                        clarifyStr = "" + chosenPieceRow;
+                    }
+
+                    if (multiChoiceSameRow && multiChoiceSameCol) {
+                        clarifyStr = chosenPieceCol + "" + chosenPieceRow;
+                    }
+
+                    moveNotation = moveNotation.charAt(0) + "" + clarifyStr + moveStr.substring(1);
+                }
+
+
+                if (chosenPiece instanceof Pawn && ((Pawn) chosenPiece).isPromoted()) {
                     moveNotation += gameBoard[moveRow][moveCol].SHORT_NAME;
                 }
 
-                if (chosenPiece instanceof King && ((King) chosenPiece).performedCastle) {
+                if (chosenPiece instanceof King && ((King) chosenPiece).isCastled()) {
                     moveNotation = "0-0";
-                    if (((King) chosenPiece).queenSideCastle) {
+                    if (((King) chosenPiece).isQueenSideCastled()) {
                         moveNotation += "-0";
                     }
                 }
@@ -224,12 +259,11 @@ public class Chez {
 
                 if (checkmated) {
                     //if the current move was already noted as check, update it
-                    if (moveNotation.charAt(moveNotation.length()-1) == '+') {
+                    if (moveNotation.charAt(moveNotation.length() - 1) == '+') {
                         moveNotation = moveNotation.substring(0, moveNotation.length() - 1);
                     }
                     moveNotation += "#";
-                    System.out.println("CHECKMATE");
-                    System.out.println(currentPlayerColor + " wins");
+                    System.out.println("CHECKMATE for " + currentPlayerColor);
                     gameOver = true;
 
                 }
@@ -237,17 +271,17 @@ public class Chez {
                 moveList.add(moveNotation);
 
 
-                currentPlayerColor = currentPlayerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
+
 
             }
 
-
             showBoard();
-
 
             if (checkmated) {
                 printMovesList();
             }
+
+            currentPlayerColor = currentPlayerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
 
         }
 
@@ -335,9 +369,9 @@ public class Chez {
         return rowCol;
     }
 
+    private Piece findPieceToMove(String movementStr, Color playerColor, String extraMoveInfo) {
 
-
-    private Piece findPieceToMove(String movementStr, Color playerColor) {
+        multiPieceChoice = false; //to record move notation correctly when the choice of piece is ambiguous
 
         //movementStr is like e5 or Nc3 or Qf7 etc.
         char pieceShortName;
@@ -359,8 +393,9 @@ public class Chez {
 
         }
 
+        if (movementStr.length() == 0) return null;
 
-        if (movementStr.length() == 3) { //non-pawn moves note the type of piece to be moved.
+        if (Character.isUpperCase(movementStr.charAt(0))) { //non-pawn moves note the type of piece to be moved.
             pieceShortName = movementStr.charAt(0);
             alphanumericStr = movementStr.substring(1);
         } else {
@@ -497,22 +532,10 @@ public class Chez {
         //KNIGHT - specific squares with a row / col difference of 3
         if (pieceShortName == 'N') {
 
-            int[][] validKnightMoveSquares = {
-                    {destRow - 2, destCol - 1},
-                    {destRow - 2, destCol + 1},
-                    {destRow - 1, destCol - 2},
-                    {destRow - 1, destCol + 2},
+            for (int[] rowCol : Knight.knightMoveOffsets) {
 
-                    {destRow + 2, destCol - 1},
-                    {destRow + 2, destCol + 1},
-                    {destRow + 1, destCol - 2},
-                    {destRow + 1, destCol + 2},
-            };
-
-            for (int[] rowCol : validKnightMoveSquares) {
-
-                int nRow = rowCol[0];
-                int nCol = rowCol[1];
+                int nRow = destRow + rowCol[0];
+                int nCol = destCol + rowCol[1];
 
                 if (Piece.outOfBounds(nRow) || Piece.outOfBounds(nCol)) {
                     continue;
@@ -577,10 +600,42 @@ public class Chez {
             return pieceChoices.get(0);
         }
 
+        multiPieceChoice = true;
+
+        //if disambiguation was already provided, use it to find the correct piece to move.
+        //this should work whether the row, col or both are provided.
+        if (extraMoveInfo != null) {
+
+            for (Piece p : pieceChoices) {
+                String alphaColRow = p.getAlphanumericLoc();
+
+                if (alphaColRow.contains(extraMoveInfo)) {
+                    return p;
+                }
+
+            }
+        }
+
         System.out.println("choose piece to move: ");
+
+        ArrayList<Integer> pieceChoiceRows = new ArrayList<>();
+        ArrayList<Integer> pieceChoiceCols = new ArrayList<>();
 
         for (int i = 0; i < pieceChoices.size(); ++i) {
             Piece p = pieceChoices.get(i);
+
+            if (!pieceChoiceRows.contains(p.currentRow)) {
+                pieceChoiceRows.add(p.currentRow);
+            } else {
+                multiChoiceSameRow = true;
+            }
+
+            if (!pieceChoiceCols.contains(p.currentCol)) {
+                pieceChoiceCols.add(p.currentCol);
+            } else {
+                multiChoiceSameCol = true;
+            }
+
             System.out.print("[" + (i + 1) + "] " + p.getAlphanumericLoc() + ", ");
         }
 
@@ -613,6 +668,10 @@ public class Chez {
             ++moveListCount;
         }
 
+        if (checkmated) {
+            System.out.print((currentPlayerColor == Color.WHITE) ? "1-0" : "0-1");
+        }
+
         System.out.println();
     }
 
@@ -636,6 +695,83 @@ public class Chez {
             }
         }
 
+    }
+
+    //clean up the input String for use in the findPieceToMove() method which requires just the piece short name
+    //(if not a pawn) and the final board destination.
+    //returns any extra disambiguation info in array position [0] and the regular move String in array[1]
+    private String[] parseNotation(String inputStr) {
+
+        String[] moveInfo = new String[2];
+
+        if (inputStr == null) {
+            return moveInfo;
+        }
+
+        //handle special case of castling.
+        if (inputStr.equals("0-0") || inputStr.equals("O-O") || inputStr.equals("0-0-0") || inputStr.equals("O-O-O")) {
+            moveInfo[1] = inputStr;
+            return moveInfo;
+        }
+
+        //filter out any capital letters that aren't piece names.
+        List<Character> pieceShortNames = Arrays.asList('K', 'Q', 'N', 'B', 'R');
+        StringBuilder tempInputStr = new StringBuilder();
+
+        char firstChar = inputStr.charAt(0);
+        boolean pawn = true;
+
+        //pawns are not specifically noted with a capital letter.
+        if (pieceShortNames.contains(firstChar)) {
+            tempInputStr.append(firstChar);
+            pawn = false;
+        }
+
+        //filter out any rows outside of a - h chars, and add numbers. anything else is dropped.
+        // (e.g. # ! ? notation symbols used for checkmate, comments, etc)
+        for (int i = 0; i < inputStr.length(); ++i) {
+
+            char current = inputStr.charAt(i);
+
+            if (current >= 'a' && current <= 'h') {
+                tempInputStr.append(current);
+            }
+
+            if (Character.isDigit(current)) {
+                tempInputStr.append(current);
+            }
+
+        }
+
+        String destStr = tempInputStr.toString();
+
+        //remove potential en passant notation. as 'p' will not be processed, an erroneous 'e' might remain.
+        //in any case, the last char must always be a digit.
+        char last = destStr.charAt(destStr.length() - 1);
+
+        if (!Character.isDigit(last)) {
+            destStr = destStr.substring(0, destStr.length() - 1);
+        }
+
+        //handle disambiguation strings where extra information about the exact piece to move is given.
+        //e.g. Ngf3 means move the Knight at col 'g' to location 'f3'. or here: exd5 -> sanitized to -> ed5 for pawn attack, etc.
+        if (destStr.length() == 3 && pawn || destStr.length() > 3 && !pawn) {
+
+            int firstRowColIndex = 1; //the first additional char found. named pieces will have 'K' etc as the first char
+
+            if (pawn) {
+                firstRowColIndex = 0;
+            }
+
+            if (destStr.charAt(firstRowColIndex) >= 'a' && destStr.charAt(firstRowColIndex) <= 'h') {
+                moveInfo[0] = destStr.charAt(firstRowColIndex) + "";
+                destStr = destStr.substring(0, firstRowColIndex) + destStr.substring(firstRowColIndex + 1);
+            }
+        }
+
+        moveInfo[1] = destStr;
+
+        return moveInfo;
     }
 
 
