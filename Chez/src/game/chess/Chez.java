@@ -12,7 +12,10 @@ public class Chez {
     private int moveCount = 1;
     private Color currentPlayerColor = Color.WHITE;
 
+    //for correct game record notation if choice made between multiple pieces to use
     private boolean multiPieceChoice;
+
+    //for disambiguation of multiple pieces in user input
     private boolean multiChoiceSameCol;
     private boolean multiChoiceSameRow;
 
@@ -23,41 +26,7 @@ public class Chez {
     private int[] wKingLoc = {7, 4};
 
     public Chez() {
-
-        gameBoard = new Piece[8][8];
-
-        //pawns
-        for (int square = 0; square < 8; ++square) {
-            gameBoard[1][square] = new Pawn(Color.BLACK, 1, square, gameBoard);
-            gameBoard[6][square] = new Pawn(Color.WHITE, 6, square, gameBoard);
-        }
-
-        //rooks
-        gameBoard[0][0] = new Rook(Color.BLACK, 0, 0, gameBoard);
-        gameBoard[0][7] = new Rook(Color.BLACK, 0, 7, gameBoard);
-        gameBoard[7][0] = new Rook(Color.WHITE, 7, 0, gameBoard);
-        gameBoard[7][7] = new Rook(Color.WHITE, 7, 7, gameBoard);
-
-        //knights
-        gameBoard[0][1] = new Knight(Color.BLACK, 0, 1, gameBoard);
-        gameBoard[0][6] = new Knight(Color.BLACK, 0, 6, gameBoard);
-        gameBoard[7][1] = new Knight(Color.WHITE, 7, 1, gameBoard);
-        gameBoard[7][6] = new Knight(Color.WHITE, 7, 6, gameBoard);
-
-        //bishops
-        gameBoard[0][2] = new Bishop(Color.BLACK, 0, 2, gameBoard);
-        gameBoard[0][5] = new Bishop(Color.BLACK, 0, 5, gameBoard);
-        gameBoard[7][2] = new Bishop(Color.WHITE, 7, 2, gameBoard);
-        gameBoard[7][5] = new Bishop(Color.WHITE, 7, 5, gameBoard);
-
-        //queens
-        gameBoard[0][3] = new Queen(Color.BLACK, 0, 3, gameBoard);
-        gameBoard[7][3] = new Queen(Color.WHITE, 7, 3, gameBoard);
-
-        //kings
-        gameBoard[0][4] = new King(Color.BLACK, 0, 4, gameBoard);
-        gameBoard[7][4] = new King(Color.WHITE, 7, 4, gameBoard);
-
+        gameBoard = BoardBuilder.makeBoard();
     }
 
     public void play() {
@@ -70,7 +39,7 @@ public class Chez {
 
             printMovesList();
 
-            //TODO: add surrendering.
+            //TODO: add surrendering / stalemate (??).
             //TODO: (maybe) only allow moves that remove check condition if king in check (requires surrender or automatic checkmate if not possible)
 
             System.out.print("[" + points[0] + ":" + points[1] + "] ");
@@ -102,7 +71,6 @@ public class Chez {
 
             //handle queen-side castling.
             if (moveStr.equals("0-0-0") || moveStr.equals("O-O-O")) {
-
                 if (currentPlayerColor == Color.BLACK) {
                     moveStr = "Kc8";
                 } else {
@@ -154,7 +122,7 @@ public class Chez {
 
             boolean validMove = chosenPiece.move(moveRow, moveCol, points);
 
-            //after successful move, king will be there
+            //after successful move, king will be at the new spot
             boolean kingMoved = gameBoard[moveRow][moveCol] instanceof King;
 
             if (validMove) {
@@ -162,7 +130,6 @@ public class Chez {
                 ++moveCount;
 
                 if (kingMoved) {
-
                     int[] newKingLoc = {chosenPiece.currentRow, chosenPiece.currentCol};
 
                     if (currentPlayerColor == Color.WHITE) {
@@ -189,7 +156,7 @@ public class Chez {
 
 
                 //notation to clarify which piece was chosen in case of multiple options. e.g. Nge7 means the knight at g was moved to e7.
-                //an attacking pawn will already record its move from the start col, so it's notation doesn't need to change.
+                //an attacking pawn will already record its move from the start col, so its notation doesn't need to change.
                 if (multiPieceChoice && !(chosenPiece instanceof Pawn && (attackAttempt || ((Pawn) chosenPiece).isEnPassantCapturing()))) {
 
                     String clarifyStr = "" + chosenPieceCol;
@@ -269,8 +236,6 @@ public class Chez {
                 }
 
                 moveList.add(moveNotation);
-
-
 
 
             }
@@ -730,7 +695,6 @@ public class Chez {
         //filter out any rows outside of a - h chars, and add numbers. anything else is dropped.
         // (e.g. # ! ? notation symbols used for checkmate, comments, etc)
         for (int i = 0; i < inputStr.length(); ++i) {
-
             char current = inputStr.charAt(i);
 
             if (current >= 'a' && current <= 'h') {
