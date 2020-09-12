@@ -411,10 +411,11 @@ public class Chez {
 
             }
 
-            if (!Piece.outOfBounds(destRow + pawnRowOffset)) {
+            //attacking en passant. (capturing pieces that have moved 2 squares on their first move, as if they had only moved 1)
+            if (playerColor == Color.WHITE && destRow == 2 || playerColor == Color.BLACK && destRow == 5) {
                 Piece epPiece = gameBoard[destRow + pawnRowOffset][destCol];
 
-                //attacking en passant.
+
                 if (gameBoard[destRow][destCol] == null && epPiece instanceof Pawn && epPiece.COLOR != playerColor) {
 
                     String previousMoveStr = null;
