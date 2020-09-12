@@ -22,7 +22,7 @@ abstract class Piece {
     protected int timesMoved;
     protected boolean captured = false;
 
-    Piece[][] gameBoard = new Piece[8][8];
+    protected Piece[][] gameBoard = new Piece[8][8];
 
 
     Piece(Color color, String name) {

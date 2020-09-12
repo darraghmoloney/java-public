@@ -9,7 +9,7 @@ public class Chez {
 
     private final Piece[][] gameBoard;
     private boolean checkmated;
-    private int moveCount = 1;
+    //    private int moveCount = 1;
     private Color currentPlayerColor = Color.WHITE;
 
     //for correct game record notation if choice made between multiple pieces to use
@@ -83,6 +83,10 @@ public class Chez {
                 continue;
             }
 
+            if (chosenPiece instanceof Pawn) {
+                ((Pawn) chosenPiece).setPieceToPromoteTo(moveInfo[2]); //if promotion info is included in notation string, add it
+            }
+
 
             String rowColStr = moveStr;
             if (moveStr.length() > 2) rowColStr = rowColStr.substring(1); //location is after the piece short name
@@ -127,7 +131,7 @@ public class Chez {
 
             if (validMove) {
 
-                ++moveCount;
+//                ++moveCount;
 
                 if (kingMoved) {
                     int[] newKingLoc = {chosenPiece.currentRow, chosenPiece.currentCol};
@@ -344,7 +348,6 @@ public class Chez {
 
         //special handling for castling.
         if (movementStr.equals("0-0") || movementStr.equals("0-0-0")) {
-
             int homeRow = 0;
             if (playerColor == Color.WHITE) {
                 homeRow = 7;
@@ -408,50 +411,51 @@ public class Chez {
 
             }
 
-            Piece epPiece = gameBoard[destRow + pawnRowOffset][destCol];
+            if (!Piece.outOfBounds(destRow + pawnRowOffset)) {
+                Piece epPiece = gameBoard[destRow + pawnRowOffset][destCol];
 
-            //attacking en passant.
-            if (gameBoard[destRow][destCol] == null && epPiece instanceof Pawn && epPiece.COLOR != playerColor) {
+                //attacking en passant.
+                if (gameBoard[destRow][destCol] == null && epPiece instanceof Pawn && epPiece.COLOR != playerColor) {
 
-                String previousMoveStr = null;
+                    String previousMoveStr = null;
 
-                if (moveList.size() > 0) {
-                    previousMoveStr = moveList.get(moveList.size() - 1);
-                }
-
-                if (previousMoveStr != null && previousMoveStr.length() == 2) { //length 2 move string implies pawn. (just col & row)
-
-                    int pawnTwoStepRow = epPiece.COLOR == Color.BLACK ? 3 : 4; //2 rows after the initial pawn starting row
-                    int previousMoveRow = 8 - (Integer.parseInt(previousMoveStr.substring(1))); //convert from display row to array index (inverted).
-
-                    //can only move en passant IMMEDIATELY after opponent moved 2 squares forward in initial pawn movement.
-                    if (previousMoveRow == pawnTwoStepRow) {
-
-                        if (epPiece.timesMoved == 1 && epPiece.currentRow == pawnTwoStepRow) {
-
-                            if (destCol - 1 >= 0) {
-                                Piece leftPiece = gameBoard[prevPawnRow][destCol - 1];
-
-                                if (leftPiece instanceof Pawn && leftPiece.COLOR == playerColor) {
-                                    pieceChoices.add(leftPiece);
-                                }
-
-                            }
-
-                            if (destCol + 1 < 8) {
-                                Piece rightPiece = gameBoard[prevPawnRow][destCol + 1];
-
-                                if (rightPiece instanceof Pawn && rightPiece.COLOR == playerColor) {
-                                    pieceChoices.add(rightPiece);
-                                }
-
-                            }
-
-                        }
+                    if (moveList.size() > 0) {
+                        previousMoveStr = moveList.get(moveList.size() - 1);
                     }
 
-                }
+                    if (previousMoveStr != null && previousMoveStr.length() == 2) { //length 2 move string implies pawn. (just col & row)
 
+                        int pawnTwoStepRow = epPiece.COLOR == Color.BLACK ? 3 : 4; //2 rows after the initial pawn starting row
+                        int previousMoveRow = 8 - (Integer.parseInt(previousMoveStr.substring(1))); //convert from display row to array index (inverted).
+
+                        //can only move en passant IMMEDIATELY after opponent moved 2 squares forward in initial pawn movement.
+                        if (previousMoveRow == pawnTwoStepRow) {
+
+                            if (epPiece.timesMoved == 1 && epPiece.currentRow == pawnTwoStepRow) {
+
+                                if (destCol - 1 >= 0) {
+                                    Piece leftPiece = gameBoard[prevPawnRow][destCol - 1];
+
+                                    if (leftPiece instanceof Pawn && leftPiece.COLOR == playerColor) {
+                                        pieceChoices.add(leftPiece);
+                                    }
+
+                                }
+
+                                if (destCol + 1 < 8) {
+                                    Piece rightPiece = gameBoard[prevPawnRow][destCol + 1];
+
+                                    if (rightPiece instanceof Pawn && rightPiece.COLOR == playerColor) {
+                                        pieceChoices.add(rightPiece);
+                                    }
+
+                                }
+
+                            }
+                        }
+
+                    }
+                }
             }
 
 
@@ -665,9 +669,10 @@ public class Chez {
     //clean up the input String for use in the findPieceToMove() method which requires just the piece short name
     //(if not a pawn) and the final board destination.
     //returns any extra disambiguation info in array position [0] and the regular move String in array[1]
-    private String[] parseNotation(String inputStr) {
+    //and any pawn promotion choice in [2]
+    private static String[] parseNotation(String inputStr) {
 
-        String[] moveInfo = new String[2];
+        String[] moveInfo = new String[3];
 
         if (inputStr == null) {
             return moveInfo;
@@ -695,14 +700,19 @@ public class Chez {
         //filter out any rows outside of a - h chars, and add numbers. anything else is dropped.
         // (e.g. # ! ? notation symbols used for checkmate, comments, etc)
         for (int i = 0; i < inputStr.length(); ++i) {
-            char current = inputStr.charAt(i);
+            char currentChar = inputStr.charAt(i);
 
-            if (current >= 'a' && current <= 'h') {
-                tempInputStr.append(current);
+            if (currentChar >= 'a' && currentChar <= 'h') {
+                tempInputStr.append(currentChar);
             }
 
-            if (Character.isDigit(current)) {
-                tempInputStr.append(current);
+            if (Character.isDigit(currentChar)) {
+                tempInputStr.append(currentChar);
+            }
+
+            //add promotion info if pawn only. add the first one found.
+            if (pawn && currentChar != 'K' && pieceShortNames.contains(currentChar) && moveInfo[2] == null) {
+                moveInfo[2] = currentChar + "";
             }
 
         }
@@ -713,8 +723,11 @@ public class Chez {
         //in any case, the last char must always be a digit.
         char last = destStr.charAt(destStr.length() - 1);
 
-        if (!Character.isDigit(last)) {
+        //remove anything before the final digit. if a pawn promotion occurs, the new piece type will be noted after the number,
+        //so store it too if found.
+        while (!Character.isDigit(last)) {
             destStr = destStr.substring(0, destStr.length() - 1);
+            last = destStr.charAt(destStr.length() - 1);
         }
 
         //handle disambiguation strings where extra information about the exact piece to move is given.
