@@ -129,17 +129,18 @@ class King extends Piece {
     //determine whether the King has no possible way to escape from check
     boolean isCheckmated() {
 
-        //1. see if the king can move to a space that isn't under attack.
+        //1. see if the king can move to an adjacent space that isn't under attack.
         for (int checkRow = currentRow - 1; checkRow < currentRow + 2; ++checkRow) {
             for (int checkCol = currentCol - 1; checkCol < currentCol + 2; ++checkCol) {
 
                 if (Piece.outOfBounds(checkRow) || Piece.outOfBounds(checkCol)) continue;
-                if (checkRow == 0 && checkCol == 0) continue;
+                if (checkRow == currentRow && checkCol == currentCol) continue; //self spot
 
-                if (gameBoard[checkRow][checkCol] != null) continue;
+                //own color pieces block movement
+                if (gameBoard[checkRow][checkCol] != null && gameBoard[checkRow][checkCol].COLOR == this.COLOR) continue;
 
                 if (!isSquareUnderAttack(gameBoard, checkRow, checkCol, ENEMY_COLOR)) {
-                    return false; //a spot that is in bounds, not the same spot, free, and not being attacked.
+                    return false; //a spot that is in bounds, not the same spot, free or an enemy piece, and not being attacked.
                 }
 
             }
