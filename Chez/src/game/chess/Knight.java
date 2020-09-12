@@ -2,6 +2,18 @@ package game.chess;
 
 class Knight extends Piece {
 
+    final static int[][] knightMoveOffsets = {
+            {- 2, - 1},
+            {- 2, + 1},
+            {- 1, - 2},
+            {- 1, + 2},
+
+            {+ 2, - 1},
+            {+ 2, + 1},
+            {+ 1, - 2},
+            {+ 1, + 2},
+    };
+
 
     Knight(Color color, int row, int col, Piece[][] gameBoard) {
         super(color, "Knight", row, col, gameBoard);

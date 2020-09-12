@@ -6,9 +6,9 @@ import java.util.stream.Collectors;
 
 class King extends Piece {
 
-    boolean inCheck;
-    boolean performedCastle;
-    boolean queenSideCastle;
+    private boolean inCheck;
+    private boolean castled;
+    private boolean queenSideCastled;
 
     King(Color color, int row, int col, Piece[][] gameBoard) {
         super(color, "King", row, col, gameBoard);
@@ -18,8 +18,8 @@ class King extends Piece {
     @Override
     boolean move(int row, int col, int[] points) {
 
-        performedCastle = false;
-        queenSideCastle = false;
+        castled = false;
+        queenSideCastled = false;
 
         if (Piece.outOfBounds(row) || Piece.outOfBounds(col)) {
             System.out.println("out of bounds");
@@ -100,7 +100,7 @@ class King extends Piece {
 
         if (queenSide) {
             newRookCol = 3;
-            queenSideCastle = true;
+            queenSideCastled = true;
         }
 
         //the King is not allowed to land in a spot that results in Check (technically true of all King moves)
@@ -119,7 +119,7 @@ class King extends Piece {
         //move rook.
         rookToMove.place(currentRow, newRookCol);
 
-        performedCastle = true;
+        castled = true;
 
         return true;
 
@@ -158,12 +158,9 @@ class King extends Piece {
                 Integer[] attackerRowCol = {attackPiece.currentRow, attackPiece.currentCol};
                 ArrayList<Piece> defenders = findAttackingPieces(gameBoard, attackerRowCol, this.COLOR, false);
 
-                System.out.println(defenders);
-
                 //if the only defending piece is the King, and the attack move is to a square that can be attacked by the enemy,
                 //the King is checkmated.
                 if (defenders.size() == 1 && defenders.get(0) == this) {
-                    System.out.println(this);
                     return isSquareUnderAttack(gameBoard, attackPiece.currentRow, attackPiece.currentCol, ENEMY_COLOR);
                 }
 
@@ -244,4 +241,13 @@ class King extends Piece {
     String getIcon() {
         return COLOR == Color.BLACK ? "♚" : "♔";
     }
+
+    public boolean isCastled() {
+        return castled;
+    }
+
+    public boolean isQueenSideCastled() {
+        return queenSideCastled;
+    }
+
 }
