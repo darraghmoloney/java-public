@@ -38,6 +38,7 @@ public class BoardBuilder {
         gameBoard[0][4] = new King(Color.BLACK, 0, 4, gameBoard);
         gameBoard[7][4] = new King(Color.WHITE, 7, 4, gameBoard);
 
+
         return gameBoard;
 
     }
