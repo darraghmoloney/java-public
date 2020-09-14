@@ -1,45 +1,73 @@
 package game.chess;
 
+
 public class BoardBuilder {
 
     static Piece[][] makeBoard() {
 
+        String[][] gameArray = {
+                //a         b           c       d       e           f       g           h
+        /* 8 */ {"Rb",    "Nb",     "Bb",     "Qb",     "Kb",     "Bb",     "Nb",     "Rb"}, /* 8 */
+        /* 7 */ {" b",    " b",     " b",     " b",     " b",     " b",     " b",     " b"}, /* 7 */
+        /* 6 */ {"--",    "--",     "--",     "--",     "--",     "--",     "--",     "--"}, /* 6 */
+        /* 5 */ {"--",    "--",     "--",     "--",     "--",     "--",     "--",     "--"}, /* 5 */
+        /* 4 */ {"--",    "--",     "--",     "--",     "--",     "--",     "--",     "--"}, /* 4 */
+        /* 3 */ {"--",    "--",     "--",     "--",     "--",     "--",     "--",     "--"}, /* 3 */
+        /* 2 */ {" w",    " w",     " w",     " w",     " w",     " w",     " w",     " w"}, /* 2 */
+        /* 1 */ {"Rw",    "Nw",     "Bw",     "Qw",     "Kw",     "Bw",     "Nw",     "Rw"}, /* 1 */
+                //a         b           c       d       e           f       g           h
+        };
+
+        return makeBoardFromArray(gameArray);
+
+    }
+
+    //creates & populates a game board of Pieces based on a String array containing their location and short names.
+    // useful for testing, etc.
+    private static Piece[][] makeBoardFromArray(String[][] pieceArray) {
+
         Piece[][] gameBoard = new Piece[8][8];
 
-        //pawns
-        for (int square = 0; square < 8; ++square) {
-            gameBoard[1][square] = new Pawn(Color.BLACK, 1, square, gameBoard);
-            gameBoard[6][square] = new Pawn(Color.WHITE, 6, square, gameBoard);
+        for (int i = 0; i < gameBoard.length; ++i) {
+            for (int j = 0; j < gameBoard[i].length; ++j) {
+
+                String shortName = pieceArray[i][j];
+                if (shortName == null || shortName.length() < 2) continue;
+
+                makePieceFromShortName(shortName, i, j, gameBoard);
+            }
+
         }
 
-        //rooks
-        gameBoard[0][0] = new Rook(Color.BLACK, 0, 0, gameBoard);
-        gameBoard[0][7] = new Rook(Color.BLACK, 0, 7, gameBoard);
-        gameBoard[7][0] = new Rook(Color.WHITE, 7, 0, gameBoard);
-        gameBoard[7][7] = new Rook(Color.WHITE, 7, 7, gameBoard);
-
-        //knights
-        gameBoard[0][1] = new Knight(Color.BLACK, 0, 1, gameBoard);
-        gameBoard[0][6] = new Knight(Color.BLACK, 0, 6, gameBoard);
-        gameBoard[7][1] = new Knight(Color.WHITE, 7, 1, gameBoard);
-        gameBoard[7][6] = new Knight(Color.WHITE, 7, 6, gameBoard);
-
-        //bishops
-        gameBoard[0][2] = new Bishop(Color.BLACK, 0, 2, gameBoard);
-        gameBoard[0][5] = new Bishop(Color.BLACK, 0, 5, gameBoard);
-        gameBoard[7][2] = new Bishop(Color.WHITE, 7, 2, gameBoard);
-        gameBoard[7][5] = new Bishop(Color.WHITE, 7, 5, gameBoard);
-
-        //queens
-        gameBoard[0][3] = new Queen(Color.BLACK, 0, 3, gameBoard);
-        gameBoard[7][3] = new Queen(Color.WHITE, 7, 3, gameBoard);
-
-        //kings
-        gameBoard[0][4] = new King(Color.BLACK, 0, 4, gameBoard);
-        gameBoard[7][4] = new King(Color.WHITE, 7, 4, gameBoard);
-
-
         return gameBoard;
+    }
+
+    //note: Pawn pieces are represented by a "space" in their short name, as they have no specific notation
+    private static void makePieceFromShortName(String pieceShortName, int row, int col, Piece[][] gameBoard) {
+
+        char shortName = pieceShortName.charAt(0);
+        Color color = pieceShortName.charAt(1) == 'b' ? Color.BLACK : Color.WHITE;
+
+        switch (shortName) {
+            case 'K':
+                new King(color, row, col, gameBoard);
+                break;
+            case 'Q':
+                new Queen(color, row, col, gameBoard);
+                break;
+            case 'N':
+                new Knight(color, row, col, gameBoard);
+                break;
+            case 'R':
+                new Rook(color, row, col, gameBoard);
+                break;
+            case 'B':
+                new Bishop(color, row, col, gameBoard);
+                break;
+            case ' ':
+                new Pawn(color, row, col, gameBoard);
+                break;
+        }
 
     }
 

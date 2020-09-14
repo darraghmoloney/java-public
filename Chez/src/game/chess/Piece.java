@@ -45,6 +45,17 @@ abstract class Piece {
         timesMoved = 0; //timesMoved increments on calls to place() method in gameplay. so reset to 0 in constructor call only.
     }
 
+//    Piece(Color color, String name, String alphaLoc, Piece[][] gameBoard) {
+//        this(color, name);
+//        Integer[] rowCol = Piece.convertAlphanumericToRowCol(alphaLoc);
+//        if (rowCol != null) {
+//            this.gameBoard = gameBoard;
+//            this.currentRow = rowCol[0];
+//            this.currentCol = rowCol[1];
+//            place(currentRow, currentCol);
+//            timesMoved = 0;
+//        }
+//    }
 
 
     protected void place(int row, int col) {
@@ -85,9 +96,9 @@ abstract class Piece {
         int checkRow = currentRow + rowParity;
         int checkCol = currentCol + colParity;
 
-        for (int i = 0; i < (moves - 1); ++i) { //check to square just before final spot.
+        for (int i = 0; i < (moves - 1); ++i) { //check to square just before final spot. this accounts for attacking moves, etc.
             if (gameBoard[checkRow][checkCol] != null) { //blocked.
-                System.out.println("can't move - blocked");
+//                System.out.println("can't move - blocked");
                 return true;
             }
             checkRow += rowParity;
@@ -272,15 +283,76 @@ abstract class Piece {
 
     abstract String getIcon();
 
+    abstract ArrayList<Integer[]> getValidMoves(String lastMoveStr);
+
     public String getAlphanumericLoc() {
         return (char) (currentCol + 'a') + "" + (8 - currentRow);
     }
-
 
     static String convertRowColToAlphanumeric(int row, int col) {
         return (char) (col + 'a') + "" + (8 - row);
     }
 
+    //change co-ordinates String like "e4" to correct array row & col numbering.
+    static Integer[] convertAlphanumericToRowCol(String alphaStr) {
+
+        char rowChar = alphaStr.charAt(0);
+
+        //error cases
+        if (rowChar < 'a' || rowChar > 'h') return null;
+        if (alphaStr.length() < 2) return null;
+
+        Integer[] rowCol = new Integer[2];
+        int col = rowChar - 'a';
+        int row;
+
+        try {
+            row = 8 - Integer.parseInt(alphaStr.substring(1, 2)); //invert numbers as chess grid is displayed upside-down
+            rowCol[0] = row;
+            rowCol[1] = col;
+        } catch (NumberFormatException nfe) {
+            System.out.println("invalid row number");
+            return null;
+        }
+
+        return rowCol;
+    }
+
+
+
+    //for checking stalemate condition by testing piece moves and then changing back to the original state of the board.
+    //could also adapt for regular game but must take into account the record of game moves and update the notation
+    //of the game correctly.
+    void revertMove(int prevRow, int prevCol, Piece capturedPiece, int[] points) {
+
+        if (Piece.outOfBounds(prevRow) || Piece.outOfBounds(prevCol)) {
+            return;
+        }
+
+        gameBoard[prevRow][prevCol] = this;
+        --timesMoved;
+
+        if (capturedPiece != null) {
+            capturedPiece.captured = false;
+            capturedPiece.currentRow = this.currentRow;
+            capturedPiece.currentCol = this.currentCol;
+            gameBoard[currentRow][currentCol] = capturedPiece;
+
+            //a captured white piece means black points increased, and vice versa
+            if (capturedPiece.COLOR == Color.WHITE) {
+                points[1] -= capturedPiece.getPointsValue();
+            } else {
+                points[0] -= capturedPiece.getPointsValue();
+            }
+
+        } else {
+            gameBoard[currentRow][currentCol] = null;
+        }
+
+        this.currentRow = prevRow;
+        this.currentCol = prevCol;
+
+    }
 
     @Override
     public String toString() {

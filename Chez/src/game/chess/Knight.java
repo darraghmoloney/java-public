@@ -1,17 +1,19 @@
 package game.chess;
 
+import java.util.ArrayList;
+
 class Knight extends Piece {
 
     final static int[][] knightMoveOffsets = {
-            {- 2, - 1},
-            {- 2, + 1},
-            {- 1, - 2},
-            {- 1, + 2},
+            {-2, -1},
+            {-2, +1},
+            {-1, -2},
+            {-1, +2},
 
-            {+ 2, - 1},
-            {+ 2, + 1},
-            {+ 1, - 2},
-            {+ 1, + 2},
+            {+2, -1},
+            {+2, +1},
+            {+1, -2},
+            {+1, +2},
     };
 
 
@@ -19,6 +21,9 @@ class Knight extends Piece {
         super(color, "Knight", row, col, gameBoard);
     }
 
+//    Knight(Color color, String alphaLoc, Piece[][] gameBoard) {
+//        super(color, "Knight", alphaLoc, gameBoard);
+//    }
 
     @Override
     boolean move(int row, int col, int[] points) {
@@ -84,4 +89,28 @@ class Knight extends Piece {
     String getIcon() {
         return COLOR == Color.BLACK ? "♞" : "♘";
     }
+
+    @Override
+    ArrayList<Integer[]> getValidMoves(String lastMoveStr) {
+
+        ArrayList<Integer[]> validMovesList = new ArrayList<>();
+
+        for (int[] offsetArr : Knight.knightMoveOffsets) {
+
+            int checkRow = currentRow + offsetArr[0];
+            int checkCol = currentCol + offsetArr[1];
+
+            if (Piece.outOfBounds(checkRow) || Piece.outOfBounds(checkCol)) continue;
+
+            if (gameBoard[checkRow][checkCol] != null && gameBoard[checkRow][checkCol].COLOR == this.COLOR) continue;
+
+            Integer[] validMove = {checkRow, checkCol};
+
+            validMovesList.add(validMove);
+
+        }
+
+        return validMovesList;
+    }
+
 }
