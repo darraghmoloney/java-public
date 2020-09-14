@@ -6,7 +6,6 @@ import java.util.stream.Collectors;
 
 class King extends Piece {
 
-    private boolean inCheck;
     private boolean castled;
     private boolean queenSideCastled;
 
@@ -14,6 +13,9 @@ class King extends Piece {
         super(color, "King", row, col, gameBoard);
     }
 
+//    King(Color color, String alphaStr, Piece[][] gameBoard) {
+//        super(color, "King", alphaStr, gameBoard);
+//    }
 
     @Override
     boolean move(int row, int col, int[] points) {
@@ -65,8 +67,7 @@ class King extends Piece {
     }
 
     boolean isInCheck() {
-        inCheck = isSquareUnderAttack(gameBoard, currentRow, currentCol, ENEMY_COLOR);
-        return inCheck;
+        return isSquareUnderAttack(gameBoard, currentRow, currentCol, ENEMY_COLOR);
     }
 
     //castling is TECHNICALLY a King move, even though it also involves a Rook
@@ -79,6 +80,15 @@ class King extends Piece {
         int homeRow = COLOR == Color.BLACK ? 0 : 7;
 
         if (currentRow != homeRow) return false;
+
+        //blocked path checks up to the square before castling is possible, as it allows for the final square being
+        //occupied by an enemy piece. so the specific final king position should be checked separately too.
+//        if (queenSide) {
+//            if (gameBoard[currentRow][2] != null) return false;
+//        } else if (gameBoard[currentRow][6] != null) {
+//            return false;
+//        }
+//
 
         int rookCol = 7; //default to king-side
         int newCol = 6;
@@ -94,7 +104,7 @@ class King extends Piece {
         if (rookToMove.COLOR == ENEMY_COLOR) return false;
         if (rookToMove.timesMoved > 0) return false;
 
-        if (isBlockedPath(currentRow, newCol)) return false;
+        if (isBlockedPath(currentRow, rookCol)) return false;
 
         int newRookCol = 5;
 
@@ -129,6 +139,9 @@ class King extends Piece {
     //determine whether the King has no possible way to escape from check
     boolean isCheckmated() {
 
+        int adjacentSquares = 0;
+        int friendlySquares = 0;
+
         //1. see if the king can move to an adjacent space that isn't under attack.
         for (int checkRow = currentRow - 1; checkRow < currentRow + 2; ++checkRow) {
             for (int checkCol = currentCol - 1; checkCol < currentCol + 2; ++checkCol) {
@@ -136,14 +149,24 @@ class King extends Piece {
                 if (Piece.outOfBounds(checkRow) || Piece.outOfBounds(checkCol)) continue;
                 if (checkRow == currentRow && checkCol == currentCol) continue; //self spot
 
+                ++adjacentSquares;
+
                 //own color pieces block movement
-                if (gameBoard[checkRow][checkCol] != null && gameBoard[checkRow][checkCol].COLOR == this.COLOR) continue;
+                if (gameBoard[checkRow][checkCol] != null && gameBoard[checkRow][checkCol].COLOR == this.COLOR) {
+                    ++friendlySquares;
+                    continue;
+                }
 
                 if (!isSquareUnderAttack(gameBoard, checkRow, checkCol, ENEMY_COLOR)) {
                     return false; //a spot that is in bounds, not the same spot, free or an enemy piece, and not being attacked.
                 }
 
             }
+        }
+
+        //all squares are blocked by own team pieces
+        if (adjacentSquares == friendlySquares) {
+            return false;
         }
 
         //2. determine the pieces that are attacking the king. if there is  only 1 attacking piece, check if that piece can be attacked.
@@ -251,4 +274,53 @@ class King extends Piece {
         return queenSideCastled;
     }
 
+    @Override
+    ArrayList<Integer[]> getValidMoves(String lastMoveStr) {
+
+        ArrayList<Integer[]> validMovesList = new ArrayList<>();
+
+        int[][] moveOffsets = {
+                {-1,-1}, //top left direction
+                {-1, 0},
+                {-1,+1}, //top right
+                {0, -1}, //left
+                {0, +1}, //right
+                {+1,-1}, //bottom left
+                {+1, 0},
+                {+1,+1}, //bottom right
+        };
+
+        for (int[] offsetRowCol : moveOffsets) {
+
+            int checkRow = currentRow + offsetRowCol[0]; //NB as King moves one square only, this value is changed only once.
+            int checkCol = currentCol + offsetRowCol[1];
+
+            if (Piece.outOfBounds(checkRow) || Piece.outOfBounds(checkCol)) continue;
+
+            //valid to move to empty space or enemy occupying square
+            if (gameBoard[checkRow][checkCol] == null || gameBoard[checkRow][checkCol].COLOR == ENEMY_COLOR) {
+
+                //king may not move to a spot that is being attacked
+                if (!isSquareUnderAttack(gameBoard, checkRow, checkCol, ENEMY_COLOR)) {
+                    Integer[] validMove = {checkRow, checkCol};
+                    validMovesList.add(validMove);
+                }
+            }
+
+
+        }
+
+            if (checkCastling(true)) {
+                Integer[] validMove = {currentRow, 2};
+                validMovesList.add(validMove);
+            }
+            if (checkCastling(false)) {
+                Integer[] validMove = {currentRow, 6};
+                validMovesList.add(validMove);
+            }
+
+
+
+        return validMovesList;
+    }
 }

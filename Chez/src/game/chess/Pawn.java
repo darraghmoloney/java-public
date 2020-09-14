@@ -1,5 +1,6 @@
 package game.chess;
 
+import java.util.ArrayList;
 import java.util.Scanner;
 
 class Pawn extends Piece {
@@ -16,6 +17,9 @@ class Pawn extends Piece {
         super(color, "Pawn", row, col, gameBoard);
     }
 
+//    Pawn(Color color, String alphaStr, Piece[][] gameBoard) {
+//        super(color, "Pawn", alphaStr, gameBoard);
+//    }
 
     @Override
     public boolean move(int row, int col, int[] points) {
@@ -176,11 +180,112 @@ class Pawn extends Piece {
         return COLOR == Color.BLACK ? "♟︎" : "♙";
     }
 
-    String getPieceToPromoteTo() {
-        return pieceToPromoteTo;
-    }
+//    String getPieceToPromoteTo() {
+//        return pieceToPromoteTo;
+//    }
 
     void setPieceToPromoteTo(String pieceToPromoteTo) {
         this.pieceToPromoteTo = pieceToPromoteTo;
+    }
+
+    @Override
+    ArrayList<Integer[]> getValidMoves(String lastMoveStr) {
+
+        ArrayList<Integer[]> validMovesList = new ArrayList<>();
+
+        //check double step
+        if (timesMoved == 0 && (COLOR == Color.BLACK && currentRow == 1) || (COLOR == Color.WHITE && currentRow == 6)) {
+
+            int checkRow = COLOR == Color.BLACK ? 3 : 4;
+
+            Piece checkPiece = COLOR == Color.BLACK ? gameBoard[checkRow][currentCol] : gameBoard[checkRow][currentCol];
+
+
+            if (checkPiece == null) {
+                Integer[] validMove = {checkRow, currentCol};
+                validMovesList.add(validMove);
+            }
+
+        }
+
+        int nextRow = COLOR == Color.BLACK ? currentRow + 1 : currentRow - 1;
+
+        //check straight ahead
+        if (!Piece.outOfBounds(nextRow) && gameBoard[nextRow][currentCol] == null) {
+            Integer[] validMove = {nextRow, currentCol};
+            validMovesList.add(validMove);
+        }
+
+
+        //check attack straight left and right, and en passant
+        if (!Piece.outOfBounds(nextRow)) {
+
+            int epCaptureRow = COLOR == Color.BLACK ? 5 : 2; //i.e. the row in front of the pawn's starting row.
+
+            //top left
+            if (!Piece.outOfBounds(currentCol - 1)) {
+                Piece topLeftPiece = gameBoard[nextRow][currentCol - 1];
+
+                if (topLeftPiece != null && topLeftPiece.COLOR == ENEMY_COLOR) {
+
+                    Integer[] validMove = {nextRow, currentCol - 1};
+                    validMovesList.add(validMove);
+
+                }
+
+                //en passant
+                if (topLeftPiece == null && nextRow == epCaptureRow && lastMoveStr.length() == 2) {
+
+                    if (lastMoveStr.equals(convertRowColToAlphanumeric(currentRow, currentCol -1))) {
+                        Piece epLeftPiece = gameBoard[currentRow][currentCol - 1];
+
+                        //some of these checks are technically redundant assuming a correctly formatted move String,
+                        //but good to keep for error cases
+                        if (epLeftPiece instanceof Pawn && epLeftPiece.COLOR == ENEMY_COLOR && epLeftPiece.timesMoved == 1) {
+                            Integer[] validMove = {currentRow, currentCol - 1};
+                            validMovesList.add(validMove);
+                        }
+
+                    }
+
+                }
+
+            }
+
+            //top right
+            if (!Piece.outOfBounds(currentCol + 1)) {
+                Piece topRightPiece = gameBoard[nextRow][currentCol + 1];
+
+                if (topRightPiece != null && topRightPiece.COLOR == ENEMY_COLOR) {
+
+                    Integer[] validMove = {nextRow, currentCol + 1};
+                    validMovesList.add(validMove);
+
+                }
+
+                //en passant
+                if (topRightPiece == null && nextRow == epCaptureRow && lastMoveStr.length() == 2) {
+
+                    if (lastMoveStr.equals(convertRowColToAlphanumeric(currentRow, currentCol +1))) {
+                        Piece epRightPiece = gameBoard[currentRow][currentCol + 1];
+
+                        if (epRightPiece instanceof Pawn && epRightPiece.COLOR == ENEMY_COLOR && epRightPiece.timesMoved == 1) {
+                            Integer[] validMove = {currentRow, currentCol + 1};
+                            validMovesList.add(validMove);
+                        }
+
+                    }
+
+                }
+            }
+
+
+        }
+
+
+
+
+
+        return validMovesList;
     }
 }

@@ -1,15 +1,13 @@
 package game.chess;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Scanner;
+
+import java.util.*;
 
 public class Chez {
 
     private final Piece[][] gameBoard;
     private boolean checkmated;
-    //    private int moveCount = 1;
+    private boolean stalemate;
     private Color currentPlayerColor = Color.WHITE;
 
     //for correct game record notation if choice made between multiple pieces to use
@@ -21,12 +19,30 @@ public class Chez {
 
     private final ArrayList<String> moveList = new ArrayList<>(); //moves record
     private final int[] points = new int[2];
+    private String lastMoveStr = null;
 
     private int[] bKingLoc = {0, 4}; //store king locations to easily verify if king is in check or not
     private int[] wKingLoc = {7, 4};
 
+    private final LinkedList<Piece> activeWhitePieces = new LinkedList<>();
+    private final LinkedList<Piece> activeBlackPieces = new LinkedList<>();
+
     public Chez() {
         gameBoard = BoardBuilder.makeBoard();
+
+        for (Piece[] row : gameBoard) {
+            for (Piece piece : row) {
+                if (piece != null) {
+                    if (piece.COLOR == Color.BLACK) {
+                        activeBlackPieces.add(piece);
+                    } else {
+                        activeWhitePieces.add(piece);
+                    }
+
+                }
+            }
+        }
+
     }
 
     public void play() {
@@ -35,11 +51,13 @@ public class Chez {
 
         boolean gameOver = false;
 
+
         while (!gameOver && !checkmated) {
 
+            updateKingPositions();
             printMovesList();
 
-            //TODO: add surrendering / stalemate (??).
+            //TODO: add surrendering.
             //TODO: (maybe) only allow moves that remove check condition if king in check (requires surrender or automatic checkmate if not possible)
 
             System.out.print("[" + points[0] + ":" + points[1] + "] ");
@@ -50,13 +68,76 @@ public class Chez {
             String moveStr = sc.next();
             String[] moveInfo; //stores start position of piece if provided for disambiguation [0], and the move itself [1]
 
-            if (moveStr.length() > 0 && moveStr.charAt(0) == 'q') {
-                break;
+            if (moveStr.length() > 0) {
+                if (moveStr.charAt(0) == 'q') {
+                    break;
+                }
+                //find all possible moves for a given piece based on its board location (short name can be included but not needed)
+                else if (moveStr.equals("valid")) {
+                    String pieceToFindMovesFor = sc.next();
+
+                    if (pieceToFindMovesFor.length() > 0) {
+
+                        pieceToFindMovesFor = pieceToFindMovesFor.substring(pieceToFindMovesFor.length() - 2);
+                        Integer[] findRowCol = Piece.convertAlphanumericToRowCol(pieceToFindMovesFor);
+
+                        if (findRowCol != null) {
+                            int findRow = findRowCol[0];
+                            int findCol = findRowCol[1];
+
+                            if (!Piece.outOfBounds(findRow) && !Piece.outOfBounds(findCol)) {
+
+                                Piece found = gameBoard[findRow][findCol];
+
+                                if (found != null) {
+
+                                    System.out.println("valid moves for " + found + ": ");
+                                    ArrayList<Integer[]> validMovesList = found.getValidMoves(lastMoveStr);
+                                    System.out.print("\t");
+
+                                    for (Integer[] validRowCol : validMovesList) {
+                                        System.out.print("-");
+
+                                        if (!(found instanceof Pawn)) {
+                                            System.out.print(found.getShortName());
+                                        }
+
+                                        Piece moveSpot = gameBoard[validRowCol[0]][validRowCol[1]];
+
+                                        //print 'x' notation if move is attack
+                                        if (moveSpot != null && moveSpot.COLOR == found.ENEMY_COLOR) {
+
+                                            if (moveSpot instanceof Pawn) {
+                                                System.out.print((char) (findCol + 'a'));
+                                            }
+
+                                            System.out.print("x");
+                                        }
+
+                                        System.out.print(Piece.convertRowColToAlphanumeric(validRowCol[0], validRowCol[1]) + " ");
+                                    }
+
+                                    System.out.println();
+                                }
+
+                            }
+                        }
+
+                    }
+                    continue;
+
+                } else {
+
+                    if (moveStr.length() < 2) continue;
+
+                    //sanitize move str input - for piece choice handling, rather than safety, but it also helps.
+                    moveInfo = parseNotation(moveStr);
+                    moveStr = moveInfo[1];
+                }
             } else {
-                //sanitize move str input - for piece choice handling, rather than safety, but it also helps.
-                moveInfo = parseNotation(moveStr);
-                moveStr = moveInfo[1];
+                continue;
             }
+
 
             Piece chosenPiece = findPieceToMove(moveStr, currentPlayerColor, moveInfo[0]);
 
@@ -91,7 +172,7 @@ public class Chez {
             String rowColStr = moveStr;
             if (moveStr.length() > 2) rowColStr = rowColStr.substring(1); //location is after the piece short name
 
-            Integer[] moveRowCol = convertAlphanumericToRowCol(rowColStr);
+            Integer[] moveRowCol = Piece.convertAlphanumericToRowCol(rowColStr);
 
 
             if (moveRowCol == null) {
@@ -104,14 +185,14 @@ public class Chez {
 
             System.out.println();
 
-            boolean attackingKing = false;
+//            boolean attackingKing = false;
             String moveNotation;
 
-            if (!Piece.outOfBounds(moveRow) && !Piece.outOfBounds(moveCol)) {
-                if (gameBoard[moveRow][moveCol] instanceof King) {
-                    attackingKing = true;
-                }
-            }
+//            if (!Piece.outOfBounds(moveRow) && !Piece.outOfBounds(moveCol)) {
+//                if (gameBoard[moveRow][moveCol] instanceof King) {
+//                    attackingKing = true;
+//                }
+//            }
 
             String pieceStr = chosenPiece.getAlphanumericLoc();
 
@@ -119,6 +200,7 @@ public class Chez {
             boolean bKingWasInCheck = ((King) gameBoard[bKingLoc[0]][bKingLoc[1]]).isInCheck();
 
             boolean attackAttempt = gameBoard[moveRow][moveCol] != null;
+            Piece previousPiece = gameBoard[moveRow][moveCol];
 
             //for extra disambiguation in notation if necessary
             char chosenPieceCol = chosenPiece.getAlphanumericLoc().charAt(0);
@@ -130,8 +212,6 @@ public class Chez {
             boolean kingMoved = gameBoard[moveRow][moveCol] instanceof King;
 
             if (validMove) {
-
-//                ++moveCount;
 
                 if (kingMoved) {
                     int[] newKingLoc = {chosenPiece.currentRow, chosenPiece.currentCol};
@@ -157,6 +237,19 @@ public class Chez {
                         moveNotation = moveStr.charAt(0) + "x" + moveStr.substring(1);
                     }
                 }
+
+                //valid move to attack an enemy piece
+                if (attackAttempt && previousPiece != null) {
+                    if (currentPlayerColor == Color.BLACK) {
+                        activeWhitePieces.remove(previousPiece);
+                    } else {
+                        activeBlackPieces.remove(previousPiece);
+                    }
+
+                }
+
+//                System.out.println("active B : " + activeBlackPieces);
+//                System.out.println("active W : " + activeWhitePieces);
 
 
                 //notation to clarify which piece was chosen in case of multiple options. e.g. Nge7 means the knight at g was moved to e7.
@@ -188,44 +281,46 @@ public class Chez {
                     }
                 }
 
-                if (attackingKing) { //valid attack on king -> checkmate.
+                //valid attack on king -> checkmate. NB technically impossible to capture King in real game
+                // and should be handled already through checkmate check method
+//                if (attackingKing) {
+//
+//                    checkmated = true;
 
-                    checkmated = true;
+//                } else {
 
-                } else {
+                King wKing = (King) gameBoard[wKingLoc[0]][wKingLoc[1]];
+                King bKing = (King) gameBoard[bKingLoc[0]][bKingLoc[1]];
 
-                    King wKing = (King) gameBoard[wKingLoc[0]][wKingLoc[1]];
-                    King bKing = (King) gameBoard[bKingLoc[0]][bKingLoc[1]];
+                if (wKing == null || bKing == null) {
+                    updateKingPositions();
+                    wKing = (King) gameBoard[wKingLoc[0]][wKingLoc[1]];
+                    bKing = (King) gameBoard[bKingLoc[0]][bKingLoc[1]];
+                }
 
-                    if (wKing == null || bKing == null) {
-                        updateKingPositions();
-                        wKing = (King) gameBoard[wKingLoc[0]][wKingLoc[1]];
-                        bKing = (King) gameBoard[bKingLoc[0]][bKingLoc[1]];
+                if (wKing.isInCheck()) {
+                    System.out.println("check for w. king");
+
+                    if (wKing.isCheckmated()) {
+                        checkmated = true;
                     }
 
-                    if (wKing.isInCheck()) {
-                        System.out.println("check for w. king");
+                    if (!wKingWasInCheck && currentPlayerColor == Color.BLACK) {
+                        moveNotation += "+";
+                    }
+                }
 
-                        if (wKing.isCheckmated()) {
-                            checkmated = true;
-                        }
+                if (bKing.isInCheck()) {
+                    System.out.println("check for b. king");
 
-                        if (!wKingWasInCheck && currentPlayerColor == Color.BLACK) {
-                            moveNotation += "+";
-                        }
+                    if (bKing.isCheckmated()) {
+                        checkmated = true;
                     }
 
-                    if (bKing.isInCheck()) {
-                        System.out.println("check for b. king");
-
-                        if (bKing.isCheckmated()) {
-                            checkmated = true;
-                        }
-
-                        if (!bKingWasInCheck && currentPlayerColor == Color.WHITE) {
-                            moveNotation += "+";
-                        }
+                    if (!bKingWasInCheck && currentPlayerColor == Color.WHITE) {
+                        moveNotation += "+";
                     }
+//                    }
                 }
 
                 if (checkmated) {
@@ -240,7 +335,7 @@ public class Chez {
                 }
 
                 moveList.add(moveNotation);
-
+                lastMoveStr = moveNotation;
 
             }
 
@@ -250,7 +345,20 @@ public class Chez {
                 printMovesList();
             }
 
-            currentPlayerColor = currentPlayerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
+            if (validMove) {
+                currentPlayerColor = currentPlayerColor == Color.WHITE ? Color.BLACK : Color.WHITE;
+            }
+
+
+            checkStalemate(currentPlayerColor);
+
+            if (stalemate) {
+                System.out.println("stalemate");
+                printMovesList();
+                break;
+            }
+
+
 
         }
 
@@ -313,30 +421,6 @@ public class Chez {
 
     }
 
-    //change co-ordinates String like "e4" to correct array row & col numbering.
-    private static Integer[] convertAlphanumericToRowCol(String alphaStr) {
-
-        char rowChar = alphaStr.charAt(0);
-
-        //error cases
-        if (rowChar < 'a' || rowChar > 'h') return null;
-        if (alphaStr.length() < 2) return null;
-
-        Integer[] rowCol = new Integer[2];
-        int col = rowChar - 'a';
-        int row;
-
-        try {
-            row = 8 - Integer.parseInt(alphaStr.substring(1, 2)); //invert numbers as chess grid is displayed upside-down
-            rowCol[0] = row;
-            rowCol[1] = col;
-        } catch (NumberFormatException nfe) {
-            System.out.println("invalid row number");
-            return null;
-        }
-
-        return rowCol;
-    }
 
     private Piece findPieceToMove(String movementStr, Color playerColor, String extraMoveInfo) {
 
@@ -371,7 +455,7 @@ public class Chez {
             alphanumericStr = movementStr;
         }
 
-        Integer[] rowAndCol = convertAlphanumericToRowCol(alphanumericStr);
+        Integer[] rowAndCol = Piece.convertAlphanumericToRowCol(alphanumericStr);
 
         if (rowAndCol == null || rowAndCol[0] == null || rowAndCol[1] == null) return null;
 
@@ -640,6 +724,8 @@ public class Chez {
 
         if (checkmated) {
             System.out.print((currentPlayerColor == Color.WHITE) ? "1-0" : "0-1");
+        } else if (stalemate) {
+            System.out.print("½-½");
         }
 
         System.out.println();
@@ -672,6 +758,8 @@ public class Chez {
     //returns any extra disambiguation info in array position [0] and the regular move String in array[1]
     //and any pawn promotion choice in [2]
     private static String[] parseNotation(String inputStr) {
+
+
 
         String[] moveInfo = new String[3];
 
@@ -750,6 +838,76 @@ public class Chez {
         moveInfo[1] = destStr;
 
         return moveInfo;
+    }
+
+
+    //check if the game has reached a stalemate. this is a situation where a player's king is not in check, but the
+    // player cannot move any piece in any way without the move resulting in checkmate. this ends the game in a draw.
+    private void checkStalemate(Color currentPlayerColor) {
+
+        stalemate = true;
+
+        Piece playerKing = currentPlayerColor == Color.BLACK ?
+                gameBoard[bKingLoc[0]][bKingLoc[1]] : gameBoard[wKingLoc[0]][wKingLoc[1]];
+
+
+        //check all possible moves. find a piece, get its possible moves, one by one move the piece by
+        // updating the board temporarily, preserving the initial row and col of the moved piece,
+        // and any captured piece. check if the newly updated board has a checkmated king.
+        LinkedList<Piece> allPlayerPieces = currentPlayerColor == Color.BLACK ? activeBlackPieces : activeWhitePieces;
+
+        boolean safeMoveFound = false;
+
+        for (Piece playerPiece : allPlayerPieces) {
+
+            int startRow = playerPiece.currentRow;
+            int startCol = playerPiece.currentCol;
+
+            ArrayList<Integer[]> validMovesList = playerPiece.getValidMoves(lastMoveStr);
+
+
+            for (Integer[] rowCol : validMovesList) {
+
+                int moveRow = rowCol[0];
+                int moveCol = rowCol[1];
+
+                Piece castledRook = null;
+                int castledRookCol = moveCol > startCol ? 7 : 0;
+
+                //castling check. store rook too if necessary
+                if (playerPiece instanceof King && Math.abs(moveCol - startCol) > 1) {
+                    castledRook = gameBoard[startRow][castledRookCol];
+                }
+
+                //store Piece at location to move to in case it's an attack, so it can be restored later
+                Piece pieceAtMoveLoc = gameBoard[moveRow][moveCol];
+
+                playerPiece.move(moveRow, moveCol, points); //assuming that the move is successful as already in valid move list
+
+                //if after the move the king is not checkmated, stalemate has not occurred
+                if (!((King) playerKing).isCheckmated()) {
+                    safeMoveFound = true;
+                    stalemate = false;
+                }
+
+
+                //move checked piece back to its original spot.
+                playerPiece.revertMove(startRow, startCol, pieceAtMoveLoc, points);
+
+                if (castledRook != null) {
+                    castledRook.place(startRow, castledRookCol);
+                    --castledRook.timesMoved;
+                }
+
+                //jump out as early as possible. NB using return above won't work as pieces have to be moved back first
+                if (safeMoveFound) {
+                    return;
+                }
+
+            }
+
+        }
+
     }
 
 

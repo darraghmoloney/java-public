@@ -1,11 +1,17 @@
 package game.chess;
 
+import java.util.ArrayList;
+
 class Queen extends Piece {
 
 
     Queen(Color color, int row, int col, Piece[][] gameBoard) {
         super(color, "Queen", row, col, gameBoard);
     }
+
+//    Queen(Color color, String alphaStr, Piece[][] gameBoard) {
+//        super(color, "Queen", alphaStr, gameBoard);
+//    }
 
     @Override
     boolean move(int row, int col, int[] points) {
@@ -65,5 +71,48 @@ class Queen extends Piece {
     @Override
     String getIcon() {
         return COLOR == Color.BLACK ? "♛" : "♕";
+    }
+
+    @Override
+    ArrayList<Integer[]> getValidMoves(String lastMoveStr) {
+
+        ArrayList<Integer[]> validMovesList = new ArrayList<>();
+
+        int[][] moveOffsets = {
+                {-1,-1}, //top left direction
+                {-1, 0},
+                {-1,+1}, //top right
+                {0, -1}, //left
+                {0, +1}, //right
+                {+1,-1}, //bottom left
+                {+1, 0},
+                {+1,+1}, //bottom right
+        };
+
+        for (int[] offsetRowCol : moveOffsets) {
+
+            int checkRow = currentRow + offsetRowCol[0];
+            int checkCol = currentCol + offsetRowCol[1];
+
+            while (!Piece.outOfBounds(checkRow) && !Piece.outOfBounds(checkCol)) {
+
+                //valid to move to empty space or enemy occupying square
+                if (gameBoard[checkRow][checkCol] == null || gameBoard[checkRow][checkCol].COLOR == ENEMY_COLOR) {
+                    Integer[] validMove = {checkRow, checkCol};
+                    validMovesList.add(validMove);
+                }
+
+                //drop out of loop when either own piece is found (blocking) or enemy piece (captured in one move and stopping)
+                if (gameBoard[checkRow][checkCol] != null) break;
+
+                checkRow += offsetRowCol[0];
+                checkCol += offsetRowCol[1];
+            }
+
+
+        }
+
+
+        return validMovesList;
     }
 }
