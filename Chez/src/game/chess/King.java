@@ -307,7 +307,6 @@ class King extends Piece {
                 }
             }
 
-
         }
 
             if (checkCastling(true)) {
