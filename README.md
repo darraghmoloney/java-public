@@ -5,7 +5,7 @@ Some of the programming projects I've completed in Java, based on both course-wo
 
 ---
 ## Chez
-Console-based sort-of playable chess board simulation with piece Objects made as sub-classes of the Piece abstract class.
+Console-based sort-of playable chess board simulation with piece Objects made as sub-classes of the Piece abstract class. Supports playing games from Chess notation (including a series of moves), checking valid moves for a given piece, automatic checkmate & stalemate checks that finish the game, finding the correct piece to move, pawn capture en passant, king-rook castling and pawn promotion. Contains many undiscovered bugs.
 
 ## DFS Tracking
 Using a depth-first search to find the length of all possible paths that can be explored and return the longest ones.
