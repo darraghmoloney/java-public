@@ -2,12 +2,15 @@ package game.chess;
 
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class Chez {
 
     private final Piece[][] gameBoard;
     private boolean checkmated;
     private boolean stalemate;
+    private boolean resigned;
+
     private Color currentPlayerColor = Color.WHITE;
 
     //for correct game record notation if choice made between multiple pieces to use
@@ -51,29 +54,56 @@ public class Chez {
 
         boolean gameOver = false;
 
+        Queue<String> movesQueue = new ArrayDeque<>();
 
         while (!gameOver && !checkmated) {
 
             updateKingPositions();
             printMovesList();
 
-            //TODO: add surrendering.
-            //TODO: (maybe) only allow moves that remove check condition if king in check (requires surrender or automatic checkmate if not possible)
+            //TODO: only allow moves that remove check condition if king in check (requires surrender or automatic checkmate if not possible)
 
             System.out.print("[" + points[0] + ":" + points[1] + "] ");
 
             Scanner sc = new Scanner(System.in);
+            String moveStr;
 
-            System.out.print("enter a move for " + currentPlayerColor + " (e.g. e4, Nh6, 0-0...), or q to quit: ");
-            String moveStr = sc.next();
+            if (movesQueue.size() == 0) {
+
+                System.out.print("enter move for " + currentPlayerColor + " (e4, Nh6, 0-0...) - re[s]ign - [q]uit: ");
+                moveStr = sc.next();
+
+            } else {
+
+                //if moves are pre-loaded, display them one-by-one after a short delay
+                try {
+                    Thread.sleep(1500);
+                } catch (InterruptedException ie) {
+                    ie.printStackTrace();
+                }
+
+                moveStr = movesQueue.poll();
+
+            }
+
             String[] moveInfo; //stores start position of piece if provided for disambiguation [0], and the move itself [1]
+
+            if (moveStr == null) continue;
 
             if (moveStr.length() > 0) {
                 if (moveStr.charAt(0) == 'q') {
                     break;
                 }
+                else if (moveStr.equals("resign") || moveStr.toLowerCase().charAt(0) == 's') {
+                    System.out.println(currentPlayerColor + " resigns");
+                    resigned = true;
+                    showBoard();
+                    printMovesList();
+                    break;
+
+                }
                 //find all possible moves for a given piece based on its board location (short name can be included but not needed)
-                else if (moveStr.equals("valid")) {
+                else if (moveStr.toLowerCase().equals("valid") || moveStr.toLowerCase().charAt(0) == 'v') {
                     String pieceToFindMovesFor = sc.next();
 
                     if (pieceToFindMovesFor.length() > 0) {
@@ -107,7 +137,7 @@ public class Chez {
                                         //print 'x' notation if move is attack
                                         if (moveSpot != null && moveSpot.COLOR == found.ENEMY_COLOR) {
 
-                                            if (moveSpot instanceof Pawn) {
+                                            if (found instanceof Pawn) {
                                                 System.out.print((char) (findCol + 'a'));
                                             }
 
@@ -126,7 +156,19 @@ public class Chez {
                     }
                     continue;
 
-                } else {
+                }
+                else if (moveStr.equals("load") || moveStr.toLowerCase().charAt(0) == 'l') {
+
+                    sc.nextLine();
+                    System.out.print("enter moves: ");
+                    String allGameMoves = sc.nextLine();
+
+                    movesQueue = parseFullGameNotation(allGameMoves);
+                    continue;
+
+
+                }
+                else {
 
                     if (moveStr.length() < 2) continue;
 
@@ -248,10 +290,6 @@ public class Chez {
 
                 }
 
-//                System.out.println("active B : " + activeBlackPieces);
-//                System.out.println("active W : " + activeWhitePieces);
-
-
                 //notation to clarify which piece was chosen in case of multiple options. e.g. Nge7 means the knight at g was moved to e7.
                 //an attacking pawn will already record its move from the start col, so its notation doesn't need to change.
                 if (multiPieceChoice && !(chosenPiece instanceof Pawn && (attackAttempt || ((Pawn) chosenPiece).isEnPassantCapturing()))) {
@@ -343,6 +381,8 @@ public class Chez {
 
             if (checkmated) {
                 printMovesList();
+                System.out.println("[" + points[0] + ":" + points[1] + "] ");
+                break;
             }
 
             if (validMove) {
@@ -355,6 +395,7 @@ public class Chez {
             if (stalemate) {
                 System.out.println("stalemate");
                 printMovesList();
+                System.out.println("[" + points[0] + ":" + points[1] + "] ");
                 break;
             }
 
@@ -726,6 +767,8 @@ public class Chez {
             System.out.print((currentPlayerColor == Color.WHITE) ? "1-0" : "0-1");
         } else if (stalemate) {
             System.out.print("½-½");
+        } else if (resigned) {
+            System.out.print((currentPlayerColor == Color.WHITE) ? "0-1" : "1-0");
         }
 
         System.out.println();
@@ -758,8 +801,6 @@ public class Chez {
     //returns any extra disambiguation info in array position [0] and the regular move String in array[1]
     //and any pawn promotion choice in [2]
     private static String[] parseNotation(String inputStr) {
-
-
 
         String[] moveInfo = new String[3];
 
@@ -808,15 +849,18 @@ public class Chez {
 
         String destStr = tempInputStr.toString();
 
-        //remove potential en passant notation. as 'p' will not be processed, an erroneous 'e' might remain.
-        //in any case, the last char must always be a digit.
-        char last = destStr.charAt(destStr.length() - 1);
+        if (destStr.length() > 0) {
+            //remove potential en passant notation. as 'p' will not be processed, an erroneous 'e' might remain.
+            //in any case, the last char must always be a digit.
+            char last = destStr.charAt(destStr.length() - 1);
 
-        //remove anything before the final digit. if a pawn promotion occurs, the new piece type will be noted after the number,
-        //so store it too if found.
-        while (!Character.isDigit(last)) {
-            destStr = destStr.substring(0, destStr.length() - 1);
-            last = destStr.charAt(destStr.length() - 1);
+            //remove anything before the final digit. if a pawn promotion occurs, the new piece type will be noted after the number,
+            //so store it too if found.
+            while (!Character.isDigit(last)) {
+                destStr = destStr.substring(0, destStr.length() - 1);
+                last = destStr.charAt(destStr.length() - 1);
+            }
+
         }
 
         //handle disambiguation strings where extra information about the exact piece to move is given.
@@ -838,6 +882,28 @@ public class Chez {
         moveInfo[1] = destStr;
 
         return moveInfo;
+    }
+
+    //convert an entire noted game into a list of moves to execute. assumes basic formatting but advanced checks will
+    //be handled by the moveStr processing method anyway.
+    private static Queue<String> parseFullGameNotation(String gameStr) {
+
+        Queue<String> moveInfoArray = new ArrayDeque<>();
+
+        System.out.println(gameStr);
+
+        String[] allNotations = gameStr.split(" ");
+
+        for (String move : allNotations) {
+
+            if (move.length() < 2) continue;
+            if (Pattern.matches("\\d+\\.", move)) continue; //remove numbers from move list.
+
+            moveInfoArray.offer(move);
+
+        }
+
+        return moveInfoArray;
     }
 
 
@@ -885,7 +951,7 @@ public class Chez {
                 playerPiece.move(moveRow, moveCol, points); //assuming that the move is successful as already in valid move list
 
                 //if after the move the king is not checkmated, stalemate has not occurred
-                if (!((King) playerKing).isCheckmated()) {
+                if (!(Piece.isSquareUnderAttack(gameBoard, playerKing.currentRow, playerKing.currentCol, playerPiece.ENEMY_COLOR))) {
                     safeMoveFound = true;
                     stalemate = false;
                 }

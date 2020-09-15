@@ -201,7 +201,7 @@ class Pawn extends Piece {
             Piece checkPiece = COLOR == Color.BLACK ? gameBoard[checkRow][currentCol] : gameBoard[checkRow][currentCol];
 
 
-            if (checkPiece == null) {
+            if (checkPiece == null && !isBlockedPath(checkRow, currentCol)) {
                 Integer[] validMove = {checkRow, currentCol};
                 validMovesList.add(validMove);
             }

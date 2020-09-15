@@ -151,7 +151,7 @@ abstract class Piece {
      * @param quickCheck Toggle immediate (short-circuit) return on discovery of any attacking piece (e.g. for determining if a King is in check).
      * @return An ArrayList of all the pieces attacking that square.
      */
-    static ArrayList<Piece> findAttackingPieces(Piece[][] gameBoard, Integer[] checkRowAndCol, Color otherTeamColor, boolean quickCheck) {
+    static ArrayList<Piece> findAttackingPieces(Piece[][] gameBoard, Integer[] checkRowAndCol, Color otherTeamColor, boolean quickCheck, String lastMoveStr) {
 
         ArrayList<Piece> attackingPieces = new ArrayList<>();
 
@@ -216,6 +216,38 @@ abstract class Piece {
             }
         }
 
+        //if piece is a pawn, check if other team can capture it en passant
+        if (!(Piece.outOfBounds(checkRow) || Piece.outOfBounds(checkCol)) && gameBoard[checkRow][checkCol] instanceof Pawn && lastMoveStr != null) {
+
+            Piece thisPawn = gameBoard[checkRow][checkCol];
+            String thisAlphaStr = thisPawn.getAlphanumericLoc(); //the current location of this pawn
+
+            int epDefendRow = thisPawn.COLOR == Color.BLACK ? 3 : 4; //the pawn's 2-step forward row at which an e.p. attack can be initiated
+
+            //e.p. can only occur on  1 specific row, after 1st move and when a 2-step pawn move has been made directly before
+            if (thisPawn.currentRow == epDefendRow && thisPawn.timesMoved == 1 && lastMoveStr.equals(thisAlphaStr)) {
+
+                //directly on the left
+                if (!Piece.outOfBounds(checkCol - 1)) {
+                    Piece leftSidePiece = gameBoard[checkRow][checkCol - 1];
+
+                    if (leftSidePiece instanceof Pawn && leftSidePiece.COLOR == thisPawn.ENEMY_COLOR) {
+                        attackingPieces.add(leftSidePiece);
+                    }
+                }
+
+                //directly on the right
+                if (!Piece.outOfBounds(checkCol + 1)) {
+                    Piece rightSidePiece = gameBoard[checkRow][checkCol + 1];
+
+                    if (rightSidePiece instanceof Pawn && rightSidePiece.COLOR == thisPawn.ENEMY_COLOR) {
+                        attackingPieces.add(rightSidePiece);
+                    }
+                }
+            }
+
+        }
+
         //check all surrounds until piece found or bounds reached.
         //this loop checks directly around square 0,0.
         //      c-1 c0 c1
@@ -277,6 +309,10 @@ abstract class Piece {
 
     }
 
+    static ArrayList<Piece> findAttackingPieces(Piece[][] gameBoard, Integer[] checkRowAndCol, Color otherTeamColor, boolean quickCheck) {
+        return findAttackingPieces(gameBoard, checkRowAndCol, otherTeamColor, quickCheck, null);
+    }
+
     abstract String getShortName();
 
     abstract int getPointsValue();
@@ -317,6 +353,7 @@ abstract class Piece {
 
         return rowCol;
     }
+
 
 
 
