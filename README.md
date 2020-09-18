@@ -28,6 +28,9 @@ Using a depth-first search to find a maze exit.
 ## Primm
 Implementation of the Primm-Jarnik Minimal-Spanning Tree algorithm.
 
+## PrimmEager
+Primm-Jarnik algorithm as above, except modified to use the "eager" version that only updates the PriorityQueue heap when a lower weight for a Vertex is found, instead of adding all Edges to it.
+
 ## Snakey
 A quick-and-dirty console implementation of Snake game logic.
 
