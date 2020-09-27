@@ -73,6 +73,7 @@ class King extends Piece {
     //castling is TECHNICALLY a King move, even though it also involves a Rook
     private boolean checkCastling(boolean queenSide) {
 
+
         if (currentCol != 4)
             return false; //col. 4 is king's initial spot. castling requires both king & rook to not have moved
         if (timesMoved > 0) return false;
@@ -112,6 +113,7 @@ class King extends Piece {
             newRookCol = 3;
             queenSideCastled = true;
         }
+
 
         //the King is not allowed to land in a spot that results in Check (technically true of all King moves)
         if (isSquareUnderAttack(gameBoard, currentRow, newCol, ENEMY_COLOR)) {
@@ -194,12 +196,16 @@ class King extends Piece {
                 }
 
             }
-        }
+//        }
 
-        //3. if there is 1 piece only attacking the king, for the line of attack, see if any pieces can be moved into it
-        // to block the move. (check each square of the line of attack to see if it can be attacked by king's color pieces.)
-        if (attackers.size() == 1) {
-            Piece attackPiece = attackers.get(0);
+            //3. if there is 1 piece only attacking the king, for the line of attack, see if any pieces can be moved into it
+            // to block the move. (check each square of the line of attack to see if it can be attacked by king's color pieces.)
+
+//        if (attackers.size() == 1) {
+//            Piece attackPiece = attackers.get(0);
+
+            //knight can jump over pieces so cannot be blocked
+            if (attackPiece instanceof Knight) return true;
 
             int rowChange = attackPiece.currentRow < this.currentRow ? 1 : -1;
             int colChange = attackPiece.currentCol < this.currentCol ? 1 : -1;
@@ -207,7 +213,7 @@ class King extends Piece {
             int nextAttRow = attackPiece.currentRow + rowChange;
             int nextAttCol = attackPiece.currentCol + colChange;
 
-            //check one step forward. stop at King's location.
+            //check one step forward at a time, moving towards the King. stop at King's location.
             while (nextAttRow != this.currentRow && nextAttCol != this.currentCol) {
 
                 if (isSquareUnderAttack(gameBoard, nextAttRow, nextAttCol, this.COLOR)) {
@@ -223,7 +229,7 @@ class King extends Piece {
 
                     int totalDefenders = defendersWithoutPawn.size();
 
-                    //check for any pawns that can move straight forward to the current check spot
+                    //check and add any pawns that can move straight forward to the current check spot
                     int pawnPrecedingRow = COLOR == Color.BLACK ? nextAttRow - 1 : nextAttRow + 1;
 
                     if (!Piece.outOfBounds(pawnPrecedingRow) && gameBoard[pawnPrecedingRow][nextAttCol] instanceof Pawn) {
@@ -280,14 +286,14 @@ class King extends Piece {
         ArrayList<Integer[]> validMovesList = new ArrayList<>();
 
         int[][] moveOffsets = {
-                {-1,-1}, //top left direction
+                {-1, -1}, //top left direction
                 {-1, 0},
-                {-1,+1}, //top right
+                {-1, +1}, //top right
                 {0, -1}, //left
                 {0, +1}, //right
-                {+1,-1}, //bottom left
+                {+1, -1}, //bottom left
                 {+1, 0},
-                {+1,+1}, //bottom right
+                {+1, +1}, //bottom right
         };
 
         for (int[] offsetRowCol : moveOffsets) {
@@ -309,15 +315,14 @@ class King extends Piece {
 
         }
 
-            if (checkCastling(true)) {
-                Integer[] validMove = {currentRow, 2};
-                validMovesList.add(validMove);
-            }
-            if (checkCastling(false)) {
-                Integer[] validMove = {currentRow, 6};
-                validMovesList.add(validMove);
-            }
-
+        if (checkCastling(true)) {
+            Integer[] validMove = {currentRow, 2};
+            validMovesList.add(validMove);
+        }
+        if (checkCastling(false)) {
+            Integer[] validMove = {currentRow, 6};
+            validMovesList.add(validMove);
+        }
 
 
         return validMovesList;

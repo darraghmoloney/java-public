@@ -64,7 +64,7 @@ abstract class Piece {
             currentRow = row;
             currentCol = col;
             gameBoard[row][col] = this;
-            ++timesMoved;
+//            ++timesMoved;
         }
     }
 
@@ -149,6 +149,8 @@ abstract class Piece {
      * @param checkRowAndCol An Integer array containing the row and column to check in position 0 and 1 respectively.
      * @param otherTeamColor The enemy piece's color.
      * @param quickCheck Toggle immediate (short-circuit) return on discovery of any attacking piece (e.g. for determining if a King is in check).
+     * @param lastMoveStr The previous move in the game, which is necessary to check for a Pawn en passant capture as it can only occur on the move
+     *                    directly after the enemy's Pawn has moved forward two squares.
      * @return An ArrayList of all the pieces attacking that square.
      */
     static ArrayList<Piece> findAttackingPieces(Piece[][] gameBoard, Integer[] checkRowAndCol, Color otherTeamColor, boolean quickCheck, String lastMoveStr) {
@@ -367,10 +369,11 @@ abstract class Piece {
         }
 
         gameBoard[prevRow][prevCol] = this;
-        --timesMoved;
+//        --timesMoved;
 
         if (capturedPiece != null) {
             capturedPiece.captured = false;
+//            --capturedPiece.timesMoved;
             capturedPiece.currentRow = this.currentRow;
             capturedPiece.currentCol = this.currentCol;
             gameBoard[currentRow][currentCol] = capturedPiece;
