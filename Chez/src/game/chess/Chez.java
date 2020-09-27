@@ -76,11 +76,11 @@ public class Chez {
             } else {
 
                 //if moves are pre-loaded, display them one-by-one after a short delay
-                try {
-                    Thread.sleep(1500);
-                } catch (InterruptedException ie) {
-                    ie.printStackTrace();
-                }
+//                try {
+//                    Thread.sleep(1500);
+//                } catch (InterruptedException ie) {
+//                    ie.printStackTrace();
+//                }
 
                 moveStr = movesQueue.poll();
 
@@ -89,97 +89,93 @@ public class Chez {
             String[] moveInfo; //stores start position of piece if provided for disambiguation [0], and the move itself [1]
 
             if (moveStr == null) continue;
+            if (moveStr.length() <= 0) continue;
 
-            if (moveStr.length() > 0) {
-                if (moveStr.charAt(0) == 'q') {
-                    break;
-                }
-                else if (moveStr.equals("resign") || moveStr.toLowerCase().charAt(0) == 's') {
-                    System.out.println(currentPlayerColor + " resigns");
-                    resigned = true;
-                    showBoard();
-                    printMovesList();
-                    break;
+            if (moveStr.charAt(0) == 'q') {
+                break;
+            }
+            else if (moveStr.equals("resign") || moveStr.toLowerCase().charAt(0) == 's') {
+                System.out.println(currentPlayerColor + " resigns");
+                resigned = true;
+                showBoard();
+                printMovesList();
+                break;
 
-                }
-                //find all possible moves for a given piece based on its board location (short name can be included but not needed)
-                else if (moveStr.toLowerCase().equals("valid") || moveStr.toLowerCase().charAt(0) == 'v') {
-                    String pieceToFindMovesFor = sc.next();
+            }
+            //find all possible moves for a given piece based on its board location (short name can be included but not needed)
+            else if (moveStr.toLowerCase().equals("valid") || moveStr.toLowerCase().charAt(0) == 'v') {
+                String pieceToFindMovesFor = sc.next();
 
-                    if (pieceToFindMovesFor.length() > 0) {
+                if (pieceToFindMovesFor.length() > 0) {
 
-                        pieceToFindMovesFor = pieceToFindMovesFor.substring(pieceToFindMovesFor.length() - 2);
-                        Integer[] findRowCol = Piece.convertAlphanumericToRowCol(pieceToFindMovesFor);
+                    pieceToFindMovesFor = pieceToFindMovesFor.substring(pieceToFindMovesFor.length() - 2);
+                    Integer[] findRowCol = Piece.convertAlphanumericToRowCol(pieceToFindMovesFor);
 
-                        if (findRowCol != null) {
-                            int findRow = findRowCol[0];
-                            int findCol = findRowCol[1];
+                    if (findRowCol != null) {
+                        int findRow = findRowCol[0];
+                        int findCol = findRowCol[1];
 
-                            if (!Piece.outOfBounds(findRow) && !Piece.outOfBounds(findCol)) {
+                        if (!Piece.outOfBounds(findRow) && !Piece.outOfBounds(findCol)) {
 
-                                Piece found = gameBoard[findRow][findCol];
+                            Piece found = gameBoard[findRow][findCol];
 
-                                if (found != null) {
+                            if (found != null) {
 
-                                    System.out.println("valid moves for " + found + ": ");
-                                    ArrayList<Integer[]> validMovesList = found.getValidMoves(lastMoveStr);
-                                    System.out.print("\t");
+                                System.out.println("valid moves for " + found + ": ");
+                                ArrayList<Integer[]> validMovesList = found.getValidMoves(lastMoveStr);
+                                System.out.print("\t");
 
-                                    for (Integer[] validRowCol : validMovesList) {
-                                        System.out.print("-");
+                                for (Integer[] validRowCol : validMovesList) {
+                                    System.out.print("-");
 
-                                        if (!(found instanceof Pawn)) {
-                                            System.out.print(found.getShortName());
-                                        }
-
-                                        Piece moveSpot = gameBoard[validRowCol[0]][validRowCol[1]];
-
-                                        //print 'x' notation if move is attack
-                                        if (moveSpot != null && moveSpot.COLOR == found.ENEMY_COLOR) {
-
-                                            if (found instanceof Pawn) {
-                                                System.out.print((char) (findCol + 'a'));
-                                            }
-
-                                            System.out.print("x");
-                                        }
-
-                                        System.out.print(Piece.convertRowColToAlphanumeric(validRowCol[0], validRowCol[1]) + " ");
+                                    if (!(found instanceof Pawn)) {
+                                        System.out.print(found.getShortName());
                                     }
 
-                                    System.out.println();
+                                    Piece moveSpot = gameBoard[validRowCol[0]][validRowCol[1]];
+
+                                    //print 'x' notation if move is attack
+                                    if (moveSpot != null && moveSpot.COLOR == found.ENEMY_COLOR) {
+
+                                        if (found instanceof Pawn) {
+                                            System.out.print((char) (findCol + 'a'));
+                                        }
+
+                                        System.out.print("x");
+                                    }
+
+                                    System.out.print(Piece.convertRowColToAlphanumeric(validRowCol[0], validRowCol[1]) + " ");
                                 }
 
+                                System.out.println();
                             }
+
                         }
-
                     }
-                    continue;
 
                 }
-                else if (moveStr.equals("load") || moveStr.toLowerCase().charAt(0) == 'l') {
-
-                    sc.nextLine();
-                    System.out.print("enter moves: ");
-                    String allGameMoves = sc.nextLine();
-
-                    movesQueue = parseFullGameNotation(allGameMoves);
-                    continue;
-
-
-                }
-                else {
-
-                    if (moveStr.length() < 2) continue;
-
-                    //sanitize move str input - for piece choice handling, rather than safety, but it also helps.
-                    moveInfo = parseNotation(moveStr);
-                    moveStr = moveInfo[1];
-                }
-            } else {
                 continue;
-            }
 
+            }
+            else if (moveStr.equals("load") || moveStr.toLowerCase().charAt(0) == 'l') {
+
+                sc.nextLine();
+                System.out.print("enter moves: ");
+                String allGameMoves = sc.nextLine();
+
+                movesQueue = parseFullGameNotation(allGameMoves);
+                continue;
+
+
+            }
+            else {
+
+                if (moveStr.length() < 2) continue;
+
+                //sanitize move str input - for piece choice handling, rather than safety, but it also helps.
+                moveInfo = parseNotation(moveStr);
+                moveStr = moveInfo[1];
+            }
 
             Piece chosenPiece = findPieceToMove(moveStr, currentPlayerColor, moveInfo[0]);
 
@@ -227,14 +223,14 @@ public class Chez {
 
             System.out.println();
 
-//            boolean attackingKing = false;
+            boolean attackingKing = false;
             String moveNotation;
 
-//            if (!Piece.outOfBounds(moveRow) && !Piece.outOfBounds(moveCol)) {
-//                if (gameBoard[moveRow][moveCol] instanceof King) {
-//                    attackingKing = true;
-//                }
-//            }
+            if (!Piece.outOfBounds(moveRow) && !Piece.outOfBounds(moveCol)) {
+                if (gameBoard[moveRow][moveCol] instanceof King) {
+                    attackingKing = true;
+                }
+            }
 
             String pieceStr = chosenPiece.getAlphanumericLoc();
 
@@ -255,6 +251,8 @@ public class Chez {
 
             if (validMove) {
 
+                ++chosenPiece.timesMoved;
+
                 if (kingMoved) {
                     int[] newKingLoc = {chosenPiece.currentRow, chosenPiece.currentCol};
 
@@ -263,6 +261,7 @@ public class Chez {
                     } else {
                         bKingLoc = newKingLoc;
                     }
+
                 }
 
                 moveNotation = moveStr;
@@ -314,18 +313,22 @@ public class Chez {
 
                 if (chosenPiece instanceof King && ((King) chosenPiece).isCastled()) {
                     moveNotation = "0-0";
+
                     if (((King) chosenPiece).isQueenSideCastled()) {
                         moveNotation += "-0";
+                        gameBoard[moveRow][moveCol + 1].timesMoved++; //increment the rook's move count
+                    } else {
+                        gameBoard[moveRow][moveCol - 1].timesMoved++;
                     }
                 }
 
                 //valid attack on king -> checkmate. NB technically impossible to capture King in real game
-                // and should be handled already through checkmate check method
-//                if (attackingKing) {
-//
-//                    checkmated = true;
+                // and should be handled already through checkmate check method.
+                if (attackingKing) {
 
-//                } else {
+                    checkmated = true;
+
+                } else {
 
                 King wKing = (King) gameBoard[wKingLoc[0]][wKingLoc[1]];
                 King bKing = (King) gameBoard[bKingLoc[0]][bKingLoc[1]];
@@ -358,7 +361,7 @@ public class Chez {
                     if (!bKingWasInCheck && currentPlayerColor == Color.WHITE) {
                         moveNotation += "+";
                     }
-//                    }
+                    }
                 }
 
                 if (checkmated) {
@@ -472,8 +475,10 @@ public class Chez {
         String alphanumericStr;
 
         //special handling for castling.
-        if (movementStr.equals("0-0") || movementStr.equals("0-0-0")) {
+        if (movementStr.equals("0-0") || movementStr.equals("O-O") || movementStr.equals("0-0-0") || movementStr.equals("O-O-O")) {
+
             int homeRow = 0;
+
             if (playerColor == Color.WHITE) {
                 homeRow = 7;
             }
@@ -858,6 +863,8 @@ public class Chez {
             //so store it too if found.
             while (!Character.isDigit(last)) {
                 destStr = destStr.substring(0, destStr.length() - 1);
+                if (destStr.length() == 0) break;
+
                 last = destStr.charAt(destStr.length() - 1);
             }
 
@@ -895,7 +902,6 @@ public class Chez {
         String[] allNotations = gameStr.split(" ");
 
         for (String move : allNotations) {
-
             if (move.length() < 2) continue;
             if (Pattern.matches("\\d+\\.", move)) continue; //remove numbers from move list.
 
@@ -956,13 +962,11 @@ public class Chez {
                     stalemate = false;
                 }
 
-
                 //move checked piece back to its original spot.
                 playerPiece.revertMove(startRow, startCol, pieceAtMoveLoc, points);
 
                 if (castledRook != null) {
                     castledRook.place(startRow, castledRookCol);
-                    --castledRook.timesMoved;
                 }
 
                 //jump out as early as possible. NB using return above won't work as pieces have to be moved back first

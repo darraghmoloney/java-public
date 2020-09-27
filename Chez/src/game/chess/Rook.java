@@ -52,7 +52,7 @@ class Rook extends Piece {
         //update board
         place(row, col);
 
-        ++timesMoved;
+//        ++timesMoved;
         return true;
 
     }
